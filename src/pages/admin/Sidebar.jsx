@@ -26,7 +26,6 @@ const Sidebar = ({ sidebarOpen}) => {
     { icon: Settings, label: "Settings", path: "/admin/settings" },
   ];
 
-  // Helper function to check active state
   const isActive = (path) => location.pathname === path;
 
   return (

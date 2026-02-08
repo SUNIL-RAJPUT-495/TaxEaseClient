@@ -4,7 +4,6 @@ import { ArrowLeft, Shield, Check, CreditCard, Loader2 } from "lucide-react";
 import Axios from "../utils/axios";
 import SummaryApi from "../common/SummerAPI";
 
-// --- Utility: Load Razorpay SDK ---
 const loadRazorpayScript = (src) => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
@@ -15,7 +14,6 @@ const loadRazorpayScript = (src) => {
   });
 };
 
-// --- UI Components ---
 const Navbar = () => (
   <nav className="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 z-50 flex items-center px-4">
     <div className="container mx-auto flex justify-between items-center">
@@ -181,7 +179,7 @@ const Checkout = () => {
         }
       });
 
-      console.log("Backend Response:", data); // Debugging
+      console.log("Backend Response:", data);
 
       if (!data.success) {
         throw new Error(data.message || "Could not create order");
@@ -195,22 +193,18 @@ const Checkout = () => {
          return;
       }
 
-      // 3. Initialize Razorpay Options
       const options = {
-        key: data.key_id, // ✅ Dynamic Key from Backend
-        // key: "rzp_test_XXXX", // ⚠️ Use this ONLY for temporary testing if backend key fails
+        key: data.key_id,
         
         amount: data.order.amount,
         currency: "INR",
         name: "TaxEase",
         description: `Payment for ${service.title} - ${plan.name}`,
         
-        // ✅ IMPORTANT: Using 'orderId' because your Mongoose Schema saves it as 'orderId'
         order_id: data.order.orderId, 
         
         handler: async function (response) {
           try {
-            // 4. Verify Payment on Backend
             const verifyRes = await Axios({
               url: SummaryApi.verifyPayment.url,
               method: SummaryApi.verifyPayment.method,

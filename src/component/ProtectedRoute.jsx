@@ -28,6 +28,5 @@ export const ProtectedRouteAdmin = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
-  // ✅ Yeh line white screen fix karegi
   return children ? children : <Outlet />; 
 };

@@ -31,18 +31,15 @@ const handleSubmit = async (e) => {
     const res = await Axios({
       url: SummaryApi.verifyUser.url,
       method: SummaryApi.verifyUser.method,
-      data: data // Backend verifyUser sirf email aur password mangta hai
+      data: data
     });
 
     if (res.data.success) {
-      // 1. Purana kachra saaf karein
       localStorage.removeItem("token");
       localStorage.removeItem("user_data");
 
-      // 2. Naya Real Token save karein
       localStorage.setItem("token", res.data.token);
       
-      // 3. Backend se aayi hui real info save karein
       localStorage.setItem("user_data", JSON.stringify(res.data.data));
 
       setIsLoading(false);
@@ -58,7 +55,6 @@ const handleSubmit = async (e) => {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans relative overflow-hidden">
       
-      {/* --- Dark Theme Background for Admin --- */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-72 h-72 bg-purple-600/10 rounded-full blur-3xl" />

@@ -34,7 +34,7 @@ function Orders() {
     try {
       setLoading(true);
       const response = await Axios({
-        url: SummaryApi.allOrders.url, // Ensure SummaryAPI mein 'allOrders' hai
+        url: SummaryApi.allOrders.url, 
         method: SummaryApi.allOrders.method,
       });
 
