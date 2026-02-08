@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, Check, ArrowRight, Loader2 } from "lucide-react";
-import Axios from "../../utils/Axios";
+import Axios from "../../utils/axios";
 import SummaryApi from "../../common/SummerAPI";
 
 const NoticeHandling = () => {

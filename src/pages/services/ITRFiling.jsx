@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FileText, Check, ArrowRight } from "lucide-react";
 import { useEffect } from "react";
-import Axios from "../../utils/Axios";
+import Axios from "../../utils/axios";
 import SummaryApi from "../../common/SummerAPI";
 import { useState } from "react";
 
