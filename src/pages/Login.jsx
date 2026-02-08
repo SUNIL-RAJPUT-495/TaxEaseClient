@@ -10,33 +10,35 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-     try {
+    try {
       const res = await Axios({
-        url:SummaryApi.verifyUser.url,
-        method:SummaryApi.verifyUser.method,
-        data:{email,password}
+        url: SummaryApi.verifyUser.url,
+        method: SummaryApi.verifyUser.method,
+        data: { email, password }
       });
-      console.log(res.data);
-    } catch (error) {
-      console.error("Signup Error:", error);
-      alert("Signup Failed: " + (error.response?.data?.message || error.message));
-      return;
 
-      }
-    setTimeout(() => {
-      setIsLoading(false);
-      alert("Login Successful! Redirecting...");
-      
-      if (email.includes("admin")) {
-        navigate("/admin");
+      console.log("Response:", res.data); 
+
+      if (res.data.success) {
+        localStorage.setItem("access_token", res.data.token);
+        setTimeout(() => {
+          setIsLoading(false);
+          navigate("/"); 
+        }, 1000);
       } else {
-        navigate("/dashboard");
+        alert("Login Failed: " + res.data.message);
+        setIsLoading(false);
       }
-    }, 1000);
+
+    } catch (error) {
+      console.error("Login Error:", error);
+      alert("Login Failed: " + (error.response?.data?.message || error.message));
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -146,7 +148,7 @@ const Login = () => {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="inline-flex items-center justify-center rounded-md text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none bg-slate-900 text-white hover:bg-slate-800 h-11 px-8 w-full shadow-sm"
+               className="inline-flex items-center justify-center rounded-md text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none bg-blue-600 text-white hover:bg-blue-700 h-11 px-8 w-full shadow-sm"
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </button>

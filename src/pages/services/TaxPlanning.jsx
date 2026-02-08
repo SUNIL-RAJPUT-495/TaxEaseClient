@@ -11,6 +11,7 @@ const TaxPlanning = () => {
 
  
   const serviceInfo = {
+    id: "tax-planning",
     title: "Tax Planning",
     description: "Strategic tax planning to maximize your savings and optimize your tax liability legally.",
     icon: Calculator,
@@ -127,7 +128,7 @@ const TaxPlanning = () => {
 
                     
                       <Link
-                        to={`/checkout?service=${serviceInfo.title}&plan=${plan.planName}&price=${plan.price}`}
+                        to={`/checkout?service=${serviceInfo.id}&plan=${plan.planName.toLowerCase()}`}
                         className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
                           plan.isPopular
                             ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md hover:shadow-lg"

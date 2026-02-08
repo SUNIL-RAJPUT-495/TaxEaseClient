@@ -11,6 +11,7 @@ const GSTServices = () => {
 
   // Static Info
   const serviceInfo = {
+    id: "gst",
     title: "GST Services",
     description: "Complete GST solutions including registration, return filing, and compliance management.",
     icon: Receipt,
@@ -119,7 +120,7 @@ const GSTServices = () => {
                       </ul>
 
                       <Link
-                        to={`/checkout?service=${serviceInfo.title}&plan=${plan.planName}&price=${plan.price}`}
+                       to={`/checkout?service=${serviceInfo.id}&plan=${plan.planName.toLowerCase()}`}
                         className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
                           plan.isPopular
                             ? "bg-violet-500 text-white hover:bg-violet-600 shadow-md hover:shadow-lg"

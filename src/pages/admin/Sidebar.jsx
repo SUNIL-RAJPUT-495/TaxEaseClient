@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation ,useNavigate} from "react-router-dom";
 import { 
   Home, 
   Users, 
@@ -10,8 +10,13 @@ import {
   LogOut 
 } from "lucide-react";
 
-const Sidebar = ({ sidebarOpen, handleLogout }) => {
+const Sidebar = ({ sidebarOpen}) => {
+  const navigate = useNavigate();
   const location = useLocation();
+  const handleLogout = () => {
+    localStorage.clear(); 
+    navigate("/admin/login", { replace: true }); 
+  };
 
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/admin" },

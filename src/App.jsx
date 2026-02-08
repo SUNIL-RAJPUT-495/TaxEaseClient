@@ -2,7 +2,7 @@ import { IndexPage } from "./pages/IndexPage";
 import { Route, Routes, BrowserRouter } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Services from "./pages/Services"; 
+import Services from "./pages/Services";
 import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 import AdminLayout from "./component/layout/AdminLayout";
@@ -22,6 +22,12 @@ import Orders from "./pages/admin/Orders";
 import AllServices from "./pages/admin/AllServices";
 import Setting from "./pages/admin/Setting";
 import CreateServicePlan from "../src/pages/admin/services/CreateServicePlan";
+import AdminLogin from "./pages/adminLogin";
+
+
+// protected Route 
+import { ProtectedRoute } from "./component/ProtectedRoute";
+import { ProtectedRouteAdmin } from "./component/ProtectedRoute";
 
 function App() {
   return (
@@ -30,30 +36,38 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<IndexPage />} />
           <Route path="/services" element={<Services />} />
-          
+
           {/* Individual Services */}
           <Route path="/services/itr-filing" element={<ITRFiling />} />
           <Route path="/services/gst" element={<GSTServices />} />
           <Route path="/services/tax-planning" element={<TaxPlanning />} />
           <Route path="/services/notice-handling" element={<NoticeHandling />} />
-          
+
+
+        </Route>
+        <Route element={<ProtectedRoute />}>
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/services" element={<Dashboard />} />
+          <Route path="/dashboard/documents" element={<Dashboard />} />
+          <Route path="/dashboard/settings" element={<Dashboard />} />
+        </Route>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route element={<ProtectedRouteAdmin />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<Users />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="services" element={<AllServices />} />
+            <Route path="settings" element={<Setting />} />
+            <Route path="services/create" element={<CreateServicePlan />} />
+          </Route>
         </Route>
 
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-
-       <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<Users />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="services" element={<AllServices />} />
-          <Route path="settings" element={<Setting />} />
-          <Route path="services/create" element={<CreateServicePlan />} />
-        </Route>
-        
         {/* 404 Page */}
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -10,6 +10,7 @@ const NoticeHandling = () => {
 
  
   const serviceInfo = {
+    id: "notice-handling",
     title: "Notice Handling",
     description: "Expert assistance for responding to income tax notices and handling assessments professionally.",
     icon: AlertCircle,
@@ -124,7 +125,7 @@ const NoticeHandling = () => {
                       </ul>
 
                       <Link
-                        to={`/checkout?service=${serviceInfo.title}&plan=${plan.planName}&price=${plan.price}`}
+                         to={`/checkout?service=${serviceInfo.id}&plan=${plan.planName.toLowerCase()}`}
                         className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
                           plan.isPopular
                             ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md hover:shadow-lg"

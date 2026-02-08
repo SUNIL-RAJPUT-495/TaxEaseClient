@@ -9,6 +9,7 @@ import { useState } from "react";
 const ITRFiling = () => {
   const [plans, setPlans] = useState([]);
   const serviceInfo = {
+    id: "itr-filing",
     title: "ITR Filing",
     description: "Hassle-free income tax return filing for salaried individuals, businesses, and professionals with expert CA assistance.",
     icon: FileText,
@@ -111,7 +112,7 @@ isPopular
 
                
                   <Link
-                    to={`/checkout?service=${serviceInfo.title}&plan=${plan.name}`}
+                   to={`/checkout?service=${serviceInfo.id}&plan=${plan.planName.toLowerCase()}`}
                     className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${plan.
 isPopular
                         ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg"
