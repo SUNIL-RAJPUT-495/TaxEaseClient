@@ -3,7 +3,7 @@ import Axios from '../../utils/axios';
 import SummaryApi from '../../common/SummerAPI';
 import { Search, Loader2, FileText, Calendar, User } from 'lucide-react';
 
-// --- Helper Component: Status Badge ---
+
 const StatusBadge = ({ status }) => {
   let styles = "";
   switch (status) {
@@ -14,7 +14,7 @@ const StatusBadge = ({ status }) => {
       styles = "bg-red-100 text-red-700 border-red-200"; 
       break;
     default: 
-      styles = "bg-yellow-100 text-yellow-700 border-yellow-200"; // created/pending
+      styles = "bg-yellow-100 text-yellow-700 border-yellow-200";
   }
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles}`}>

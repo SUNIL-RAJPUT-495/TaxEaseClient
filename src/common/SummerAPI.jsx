@@ -1,7 +1,7 @@
 
 
 
-export const baseURL = "http://localhost:8080";
+export const baseURL = "https://tax-ease-client-ni97.vercel.app";
 
 const SummaryApi = {
   //  User
