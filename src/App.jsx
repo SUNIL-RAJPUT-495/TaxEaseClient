@@ -22,7 +22,7 @@ import Orders from "./pages/admin/Orders";
 import AllServices from "./pages/admin/AllServices";
 import Setting from "./pages/admin/Setting";
 import CreateServicePlan from "../src/pages/admin/services/CreateServicePlan";
-import AdminLogin from "./pages/adminLogin";
+import AdminLogin from "./pages/AdminLogin";
 
 
 // protected Route 
