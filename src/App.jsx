@@ -11,7 +11,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // ---  Service Pages ---
 import ITRFiling from "./pages/services/ITRFiling";
-import GSTServices from "./pages/services/GSTservices";
+import GSTServices from "./pages/services/GSTServices";
 import TaxPlanning from "./pages/services/TaxPlanning";
 import NoticeHandling from "./pages/services/NoticeHandling";
 import MainLayout from "./component/layout/MainLayout";
