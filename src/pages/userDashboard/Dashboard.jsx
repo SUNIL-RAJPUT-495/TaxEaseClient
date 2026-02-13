@@ -69,55 +69,35 @@ const Dashboard = () => {
     fetchUserDetails();
   }, []);
 
+  // 🔥 YAHAN FIX KIYA GAYA HAI: Naya aur Clean Chat Logic
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
 
+    const currentInput = input;
+    setInput(""); // Message bhejte hi input bar turant khali kar do
 
-
-
-
-
-
-const handleSendMessage = async () => {
-  if (!input.trim()) return;
-
-  const currentInput = input;
-  
-  const newMessage = {
-    message: currentInput,
-    senderId: userData?._id,
-    role: 'user', 
-    timestamp: new Date()
-  };
-
-  const updatedMessages = [...messages, newMessage];
-  setMessages(updatedMessages);
-  setInput(""); 
-
-  localStorage.setItem(`chat_history_${userData?._id}`, JSON.stringify(updatedMessages));
-
-  try {
-    const res = await Axios({
-      url: SummaryApi.sendChat.url,
-      method: SummaryApi.sendChat.method,
-      data: {
-        message: currentInput,
-        sender: userData?._id,
-        receiver: "679f220677ef999c0da9853c", 
-        role: 'user'
+    try {
+      // Direct API ko call karo, Backend khud samajh jayega ki Admin ko bhejna hai
+      const res = await Axios({
+        url: SummaryApi.sendChat.url,
+        method: SummaryApi.sendChat.method,
+        data: {
+          message: currentInput
+        }
+      });
+      
+      if (res.data.success) {
+        // Backend se jo asli message aya hai (sahi ID aur Time ke sath), sirf usko screen pe daalo
+        setMessages((prev) => {
+          if (prev.find(m => m._id === res.data.data._id)) return prev;
+          return [...prev, res.data.data];
+        });
       }
-    });
-    if (res.data.success) {
-      console.log("Message saved to DB");
+    } catch (error) {
+      console.error("Chat Error:", error.response?.data);
+      alert("Message sending failed. Please try again.");
     }
-  } catch (error) {
-    console.error("Chat Error:", error.response?.data);
-  }
-};
-
-
-
-
-
-
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -237,7 +217,7 @@ const handleSendMessage = async () => {
         </main>
       </div>
 
-      {/* --- Same Modal UI --- */}
+      {/* --- Upload Modal UI --- */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
