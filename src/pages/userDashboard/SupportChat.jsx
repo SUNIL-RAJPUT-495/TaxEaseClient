@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { User, Shield, Send, CheckCheck } from "lucide-react"; 
 import Pusher from 'pusher-js'; 
-
-// 🔥 FIX 1: Normal 'axios' hata kar aapka custom Axios import kiya hai (Jisme Token laga hota hai)
 import Axios from "../../utils/axios"; 
 import SummaryApi from "../../common/SummerAPI"; 
 
@@ -12,10 +10,9 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
   useEffect(() => {
     if (!userData?._id) return;
 
-    // 1. History Fetch Logic
+    // 1. History Fetch Logic (Isko ek function bana diya taaki backup me use kar sakein)
     const fetchChatHistory = async () => {
       try {
-        // 🔥 FIX 2: Custom Axios use kar rahe hain, toh token apne aap chala jayega
         const res = await Axios({
           url: `${SummaryApi.getChatHistory.url}/admin`, 
           method: SummaryApi.getChatHistory.method
@@ -25,31 +22,35 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
           setMessages(res.data.data || []);
         }
       } catch (error) {
-        console.error("Error fetching chat history:", error.response?.data || error.message);
+        console.error("Error fetching chat history:", error);
       }
     };
 
+    // Component khulte hi chat load karo
     fetchChatHistory();
 
-    // 2. Real-time Pusher setup
+    // 2. Real-time Pusher (WITH SAFETY NET)
     const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
     const channel = pusher.subscribe('chat-channel');
 
     channel.bind('new-message', (data) => {
       const newMessage = data.message;
-      const myId = userData._id.toString();
       
-      const receiverId = newMessage.receiver?._id || newMessage.receiver;
-      const senderId = newMessage.sender?._id || newMessage.sender;
+      const myId = String(userData._id);
+      const receiverId = String(newMessage.receiver?._id || newMessage.receiver);
+      const senderId = String(newMessage.sender?._id || newMessage.sender);
 
-      if (
-          (receiverId && receiverId.toString() === myId) || 
-          (senderId && senderId.toString() === myId)
-      ) {
+      // 🔥 PLAN A: Agar backend ne sab kuch theek bheja hai
+      if (receiverId === myId || senderId === myId) {
         setMessages((prev) => {
-          if (prev.some(m => m._id === newMessage._id)) return prev;
+          if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
           return [...prev, newMessage];
         });
+      } 
+      // 🔥 PLAN B (THE MAGIC FIX): Agar backend ne receiver bhejna miss kar diya!
+      // Toh hum bina user ko bataye chup-chaap database se latest message utha lenge.
+      else if (receiverId === "undefined" || !newMessage.receiver) {
+         fetchChatHistory();
       }
     });
 
@@ -60,7 +61,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
     };
   }, [userData?._id, setMessages]);
 
-  // 3. Auto-scroll
+  // 3. Auto-scroll Logic
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -100,8 +101,8 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
 
         {/* Dynamic Messages Mapping */}
         {messages.map((msg, i) => {
-          const senderId = msg.sender?._id || msg.sender;
-          const isMe = senderId === userData?._id; 
+          const msgSenderId = String(msg.sender?._id || msg.sender);
+          const isMe = msgSenderId === String(userData?._id); 
           
           return (
             <div key={msg._id || i} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
