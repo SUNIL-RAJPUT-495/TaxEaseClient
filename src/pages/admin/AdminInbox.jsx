@@ -38,8 +38,7 @@ const AdminInbox = () => {
     }
   };
 
-  // 3. Real-time Setup (Pusher)
- // 3. Real-time Setup (Pusher)
+  // 3. Real-time Setup (Pusher WITH SAFETY NET)
   useEffect(() => {
     fetchChatUsers();
     const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
@@ -48,24 +47,28 @@ const AdminInbox = () => {
     channel.bind('new-message', (data) => {
       const newMessage = data.message;
       
-      // 🔥 ASLI FIX YAHAN HAI: Sender aur Receiver ki ID ko accurately nikalna
-      const senderId = newMessage.sender?._id || newMessage.sender;
-      const receiverId = newMessage.receiver?._id || newMessage.receiver;
+      // Sidebar ko har naye message pe update karo (taaki green tick/unread data update ho)
+      fetchChatUsers();
 
-      // Agar koi user select kiya hua hai, toh strictly ID match karo
-      if (selectedUser && (
-          (senderId && senderId.toString() === selectedUser._id.toString()) || 
-          (receiverId && receiverId.toString() === selectedUser._id.toString())
-      )) {
+      if (!selectedUser) return; // Agar koi chat khuli hi nahi hai, toh aage mat badho
+
+      // 🔥 IDs ko completely safe String format mein convert kiya
+      const senderId = String(newMessage.sender?._id || newMessage.sender);
+      const receiverId = String(newMessage.receiver?._id || newMessage.receiver);
+      const currentUserId = String(selectedUser._id);
+
+      // 🔥 PLAN A: Agar ID ekdum perfectly match hoti hai
+      if (senderId === currentUserId || receiverId === currentUserId) {
         setMessages((prev) => {
-          // Double message rokne ke liye
-          if (prev.find(m => m._id === newMessage._id)) return prev;
+          // Double message bypass
+          if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
           return [...prev, newMessage];
         });
+      } 
+      // 🔥 PLAN B (SAFETY NET): Agar backend ne receiver ID nahi bheji, toh history refresh maar do (Silent update)
+      else if (receiverId === "undefined" || !newMessage.receiver) {
+         fetchUserChat(selectedUser._id);
       }
-      
-      // Naya message aane par sidebar (Inbox list) ko bhi turant refresh karo
-      fetchChatUsers();
     });
 
     return () => {
@@ -75,12 +78,11 @@ const AdminInbox = () => {
     };
   }, [selectedUser]);
 
+  // 🔥 FIX 1: Smooth Auto-Scroll to Bottom
   useEffect(() => {
-    if (selectedUser?._id) fetchUserChat(selectedUser._id);
-  }, [selectedUser]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
   }, [messages]);
 
   // 4. Send Reply Logic
@@ -100,9 +102,8 @@ const AdminInbox = () => {
       });
       
       if (res.data.success) {
-        // Backend se aaya naya message directly screen par daal do (ye khud Right side jayega)
         setMessages((prev) => {
-          if (prev.find(m => m._id === res.data.data._id)) return prev;
+          if (prev.some(m => String(m._id) === String(res.data.data._id))) return prev;
           return [...prev, res.data.data];
         });
       }
@@ -137,7 +138,7 @@ const AdminInbox = () => {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {filteredUsers.length > 0 ? filteredUsers.map((user) => (
             <div 
               key={user._id}
@@ -180,21 +181,20 @@ const AdminInbox = () => {
             </div>
 
             {/* Message History Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#f1f5f9]">
+            {/* 🔥 FIX 2: Added CSS to Hide Scrollbar perfectly */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#f1f5f9] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {messages.map((msg, i) => {
                 
-                // 🔥 ASLI JADU YAHAN HAI 🔥
-                // Agar message bhejne wale (sender) ki ID user ki ID nahi hai,
-                // iska seedha matlab hai ki ye message Admin (yaani aapne) bheja hai.
-                const senderId = msg.sender?._id || msg.sender;
-                const isMeAdmin = senderId !== selectedUser._id;
+                // 🔥 FIX 3: Object ID vs String ID conflict resolved using String()
+                const msgSenderId = String(msg.sender?._id || msg.sender);
+                const isMeAdmin = msgSenderId !== String(selectedUser._id);
 
                 return (
                   <div key={msg._id || i} className={`flex w-full ${isMeAdmin ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] p-3 rounded-2xl shadow-sm text-sm leading-relaxed ${
                       isMeAdmin 
-                        ? 'bg-blue-600 text-white rounded-tr-none' // Admin Message (Right & Blue)
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' // User Message (Left & White)
+                        ? 'bg-blue-600 text-white rounded-tr-none' // Admin Message
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' // User Message
                     }`}>
                       <p>{msg.message}</p>
                       <div className={`text-[9px] mt-1 flex items-center justify-end gap-1 font-medium ${isMeAdmin ? 'text-blue-100' : 'text-slate-400'}`}>
@@ -205,7 +205,9 @@ const AdminInbox = () => {
                   </div>
                 )
               })}
-              <div ref={scrollRef} />
+              
+              {/* 🔥 Target Div for Scroll */}
+              <div ref={scrollRef} className="h-1 w-full" />
             </div>
 
             {/* Reply Input Area */}
@@ -214,7 +216,7 @@ const AdminInbox = () => {
                 <input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
+                  onKeyDown={(e) => e.key === 'Enter' && input.trim() && handleSendReply()}
                   placeholder={`Reply to ${selectedUser.name}...`} 
                   className="flex-1 bg-transparent outline-none text-sm py-3 text-slate-800"
                 />

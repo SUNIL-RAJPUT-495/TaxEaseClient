@@ -10,7 +10,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
   useEffect(() => {
     if (!userData?._id) return;
 
-    // 1. History Fetch Logic (Isko ek function bana diya taaki backup me use kar sakein)
+    // 1. History Fetch Logic
     const fetchChatHistory = async () => {
       try {
         const res = await Axios({
@@ -26,10 +26,8 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       }
     };
 
-    // Component khulte hi chat load karo
     fetchChatHistory();
 
-    // 2. Real-time Pusher (WITH SAFETY NET)
     const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
     const channel = pusher.subscribe('chat-channel');
 
@@ -40,15 +38,12 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       const receiverId = String(newMessage.receiver?._id || newMessage.receiver);
       const senderId = String(newMessage.sender?._id || newMessage.sender);
 
-      // 🔥 PLAN A: Agar backend ne sab kuch theek bheja hai
       if (receiverId === myId || senderId === myId) {
         setMessages((prev) => {
           if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
           return [...prev, newMessage];
         });
       } 
-      // 🔥 PLAN B (THE MAGIC FIX): Agar backend ne receiver bhejna miss kar diya!
-      // Toh hum bina user ko bataye chup-chaap database se latest message utha lenge.
       else if (receiverId === "undefined" || !newMessage.receiver) {
          fetchChatHistory();
       }
@@ -61,10 +56,9 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
     };
   }, [userData?._id, setMessages]);
 
-  // 3. Auto-scroll Logic
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
 
@@ -88,7 +82,8 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#f1f5f9] space-y-4 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#f1f5f9] space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        
         {/* Admin Welcome Message */}
         <div className="flex justify-start items-start gap-3 w-full">
           <div className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center flex-shrink-0">
@@ -130,7 +125,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
             </div>
           );
         })}
-        <div ref={scrollRef} />
+        <div ref={scrollRef} className="h-1 w-full" />
       </div>
 
       {/* Input Bar */}
