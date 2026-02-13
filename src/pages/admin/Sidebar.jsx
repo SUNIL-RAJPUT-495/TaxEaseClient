@@ -7,7 +7,7 @@ import {
   LayoutGrid, 
   Settings, 
   FileText, 
-  LogOut 
+  LogOut ,Inbox
 } from "lucide-react";
 
 const Sidebar = ({ sidebarOpen}) => {
@@ -23,7 +23,9 @@ const Sidebar = ({ sidebarOpen}) => {
     { icon: Users, label: "Users", path: "/admin/users" },
     { icon: ShoppingBag, label: "Orders", path: "/admin/orders" },
     { icon: LayoutGrid, label: "Services", path: "/admin/services" },
+    { icon: Inbox, label: "Inbox", path: "/admin/inbox" },
     { icon: Settings, label: "Settings", path: "/admin/settings" },
+    
   ];
 
   const isActive = (path) => location.pathname === path;

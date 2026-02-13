@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Services from "./pages/Services";
 import Checkout from "./pages/Checkout";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/userDashboard/Dashboard";
 import AdminLayout from "./component/layout/AdminLayout";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -23,6 +23,7 @@ import AllServices from "./pages/admin/AllServices";
 import Setting from "./pages/admin/Setting";
 import CreateServicePlan from "../src/pages/admin/services/CreateServicePlan";
 import AdminLogin from "./pages/AdminLogin";
+import AdminInbox from "./pages/admin/AdminInbox";
 
 
 // protected Route 
@@ -52,6 +53,7 @@ function App() {
           <Route path="/dashboard/services" element={<Dashboard />} />
           <Route path="/dashboard/documents" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<Dashboard />} />
+          <Route path="/dashboard/chat" element={<Dashboard />}/>
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -64,6 +66,7 @@ function App() {
             <Route path="orders" element={<Orders />} />
             <Route path="services" element={<AllServices />} />
             <Route path="settings" element={<Setting />} />
+             <Route path="inbox" element={<AdminInbox />} />
             <Route path="services/create" element={<CreateServicePlan />} />
           </Route>
         </Route>

@@ -1,7 +1,7 @@
 
 
 
-export const baseURL = "https://tax-ease-backend.vercel.app";
+export const baseURL = "http://localhost:8080";
 
 const SummaryApi = {
   //  User
@@ -60,6 +60,18 @@ createOrder:{
 verifyPayment:{
   url:baseURL + "/api/payment/verify-payment",
   method:"post"
+},
+sendChat:{
+  url:baseURL + "/api/chat/send",
+  method:"post"
+},
+getChat:{
+  url:baseURL + "/api/chat/get-users",
+  method:"get"
+},
+getChatHistory:{
+  url:baseURL+"/api/chat/getUserChatHistory",
+  method:"get"
 }
 
 }
