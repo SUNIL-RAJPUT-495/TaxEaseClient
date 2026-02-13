@@ -1,25 +1,74 @@
 import React, { useEffect, useRef } from "react";
 import { User, Shield, Send } from "lucide-react";
+import Pusher from 'pusher-js'; 
+import Axios from 'axios'; // Ensure Axios is imported
+import SummaryApi from "../../common/SummerAPI"; // Ensure your API config path is correct
 
 const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    const savedMessages = localStorage.getItem(`chat_history_${userData?._id}`);
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
-    }
-  }, [userData?._id, setMessages]);
+    // Agar user ka data abhi tak load nahi hua hai, toh ruk jao
+    if (!userData?._id) return;
 
+    // 1. Database se purani chat mangwayein (History)
+    const fetchChatHistory = async () => {
+      try {
+        // 🔥 FIX 1: Hum yahan apni (loggedInUser) ID bhejenge
+        // Backend ab itna smart hai ki wo khud check kar lega ki Admin ki chat deni hai ya User ki.
+        // Purani Hardcoded ID hata di gayi hai.
+        const res = await Axios({
+          url: `${SummaryApi.getChatHistory.url}/${userData._id}`, 
+          method: SummaryApi.getChatHistory.method,
+          withCredentials: true // Agar cookies/token use kar rahe hain toh zaroori hai
+        });
+
+        if (res.data.success) {
+          setMessages(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      }
+    };
+
+    fetchChatHistory();
+
+    // 2. Real-time Pusher setup for New Messages
+    const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
+    const channel = pusher.subscribe('chat-channel');
+
+    channel.bind('new-message', (data) => {
+      const newMessage = data.message;
+      const myId = userData._id.toString();
+      
+      // 🔥 FIX 2: Check karein ki message mere chat room se related hai ya nahi
+      // Kyunki newMessage ab Conversation model se juda hai, sender aur receiver fields match karein
+      if (
+          (newMessage.receiver && newMessage.receiver.toString() === myId) || 
+          (newMessage.sender && newMessage.sender.toString() === myId)
+      ) {
+        setMessages((prev) => {
+          // Double message rokne ke liye
+          if (prev.some(m => m._id === newMessage._id)) return prev;
+          return [...prev, newMessage];
+        });
+      }
+    });
+
+    // Cleanup function: Component unmount hone par Pusher connection close karein
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+      pusher.disconnect(); // Disconnect to avoid memory leaks
+    };
+  }, [userData?._id, setMessages]); // Dependency array updated
+
+  // 3. Auto-scroll Logic (Jab bhi naya message aaye, neeche scroll karo)
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem(`chat_history_${userData?._id}`, JSON.stringify(messages));
-    }
-    
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, userData?._id]);
+  }, [messages]);
 
   return (
     <div className="h-[calc(100vh-180px)] min-h-[500px] flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -27,7 +76,9 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       <div className="px-6 py-4 border-b bg-white flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200">A</div>
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200">
+              A
+            </div>
             <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
           </div>
           <div>
@@ -40,26 +91,33 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
 
       {/* Chat Area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 bg-slate-50/30 space-y-4 scroll-smooth">
-        {/* Admin Welcome Message (Static) */}
+        {/* Admin Welcome Message */}
         <div className="flex justify-start items-start gap-3 max-w-[85%]">
-          <div className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center flex-shrink-0"><User size={14}/></div>
-          <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm text-sm text-slate-800">
+          <div className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center flex-shrink-0">
+            <User size={14}/>
+          </div>
+          <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm text-sm text-slate-800 font-medium">
             Hello {userData?.name?.split(" ")[0]}! Main TaxEase Admin hoon. Main aapki kaise help kar sakta hoon?
           </div>
         </div>
 
+        {/* Dynamic Messages Mapping */}
         {messages.map((msg, i) => {
-          const isUser = msg.senderId === userData?._id || msg.role === 'user';
+          // 🔥 FIX 3: Check karein ki message kisne bheja hai
+          // Ab frontend aur backend dono jagah sender ki ID match kar rahi hai
+          const isUser = msg.sender === userData?._id;
           
           return (
-            <div key={i} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+            <div key={msg._id || i} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
               {!isUser && (
-                 <div className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center flex-shrink-0 mr-2"><User size={14}/></div>
+                 <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 shadow-sm flex items-center justify-center flex-shrink-0 mr-2 text-blue-600 font-bold text-[10px]">
+                   A
+                 </div>
               )}
-              <div className={`p-3 rounded-2xl max-w-[80%] text-sm shadow-sm ${
+              <div className={`p-3 rounded-2xl max-w-[80%] text-sm shadow-sm leading-relaxed ${
                 isUser 
                 ? 'bg-blue-600 text-white rounded-tr-none' 
-                : 'bg-white border text-slate-800 rounded-tl-none'
+                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
               }`}>
                 {msg.message}
               </div>
@@ -68,14 +126,13 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
         })}
       </div>
 
-
       {/* Input Bar */}
       <div className="p-4 bg-white border-t">
         <div className="flex items-center gap-2 bg-slate-50 rounded-2xl px-4 py-2 border border-slate-100 focus-within:border-blue-300 transition-all">
           <input 
             value={input} 
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onSend()}
+            onKeyDown={(e) => e.key === 'Enter' && input.trim() && onSend()} // Prevent sending empty via Enter
             placeholder="Type your message here..." 
             className="flex-1 bg-transparent outline-none text-sm py-3" 
           />
