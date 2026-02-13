@@ -39,6 +39,7 @@ const AdminInbox = () => {
   };
 
   // 3. Real-time Setup (Pusher)
+ // 3. Real-time Setup (Pusher)
   useEffect(() => {
     fetchChatUsers();
     const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
@@ -47,20 +48,30 @@ const AdminInbox = () => {
     channel.bind('new-message', (data) => {
       const newMessage = data.message;
       
-      // Update window only if it matches current chat
-      if (selectedUser && (newMessage.sender === selectedUser._id || newMessage.receiver === selectedUser._id)) {
+      // 🔥 ASLI FIX YAHAN HAI: Sender aur Receiver ki ID ko accurately nikalna
+      const senderId = newMessage.sender?._id || newMessage.sender;
+      const receiverId = newMessage.receiver?._id || newMessage.receiver;
+
+      // Agar koi user select kiya hua hai, toh strictly ID match karo
+      if (selectedUser && (
+          (senderId && senderId.toString() === selectedUser._id.toString()) || 
+          (receiverId && receiverId.toString() === selectedUser._id.toString())
+      )) {
         setMessages((prev) => {
+          // Double message rokne ke liye
           if (prev.find(m => m._id === newMessage._id)) return prev;
           return [...prev, newMessage];
         });
       }
+      
+      // Naya message aane par sidebar (Inbox list) ko bhi turant refresh karo
       fetchChatUsers();
     });
 
     return () => {
       channel.unbind_all();
       channel.unsubscribe();
-      pusher.disconnect(); // Memory leak rokne ke liye
+      pusher.disconnect();
     };
   }, [selectedUser]);
 
