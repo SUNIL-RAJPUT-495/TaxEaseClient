@@ -1,30 +1,29 @@
 import React, { useEffect, useRef } from "react";
-import { User, Shield, Send } from "lucide-react";
+import { User, Shield, Send, CheckCheck } from "lucide-react"; // CheckCheck icon add kiya
 import Pusher from 'pusher-js'; 
-import Axios from 'axios'; // Ensure Axios is imported
-import SummaryApi from "../../common/SummerAPI"; // Ensure your API config path is correct
+import Axios from 'axios'; 
+import SummaryApi from "../../common/SummerAPI"; 
 
 const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    // Agar user ka data abhi tak load nahi hua hai, toh ruk jao
+    // Agar user ka data load nahi hua hai, toh API call mat karo
     if (!userData?._id) return;
 
-    // 1. Database se purani chat mangwayein (History)
+    // 1. History Fetch Logic
     const fetchChatHistory = async () => {
       try {
-        // 🔥 FIX 1: Hum yahan apni (loggedInUser) ID bhejenge
-        // Backend ab itna smart hai ki wo khud check kar lega ki Admin ki chat deni hai ya User ki.
-        // Purani Hardcoded ID hata di gayi hai.
+        // 🔥 FIX 1: Hum backend ko "admin" bhejenge param mein, 
+        // Backend automatically is user aur admin ki chat nikal kar dega.
         const res = await Axios({
-          url: `${SummaryApi.getChatHistory.url}/${userData._id}`, 
+          url: `${SummaryApi.getChatHistory.url}/admin`, 
           method: SummaryApi.getChatHistory.method,
-          withCredentials: true // Agar cookies/token use kar rahe hain toh zaroori hai
+          withCredentials: true 
         });
 
         if (res.data.success) {
-          setMessages(res.data.data);
+          setMessages(res.data.data || []);
         }
       } catch (error) {
         console.error("Error fetching chat history:", error);
@@ -33,7 +32,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
 
     fetchChatHistory();
 
-    // 2. Real-time Pusher setup for New Messages
+    // 2. Real-time Pusher setup
     const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
     const channel = pusher.subscribe('chat-channel');
 
@@ -41,29 +40,29 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       const newMessage = data.message;
       const myId = userData._id.toString();
       
-      // 🔥 FIX 2: Check karein ki message mere chat room se related hai ya nahi
-      // Kyunki newMessage ab Conversation model se juda hai, sender aur receiver fields match karein
+      const receiverId = newMessage.receiver?._id || newMessage.receiver;
+      const senderId = newMessage.sender?._id || newMessage.sender;
+
+      // Check karo ki message mere chat room ka hai
       if (
-          (newMessage.receiver && newMessage.receiver.toString() === myId) || 
-          (newMessage.sender && newMessage.sender.toString() === myId)
+          (receiverId && receiverId.toString() === myId) || 
+          (senderId && senderId.toString() === myId)
       ) {
         setMessages((prev) => {
-          // Double message rokne ke liye
           if (prev.some(m => m._id === newMessage._id)) return prev;
           return [...prev, newMessage];
         });
       }
     });
 
-    // Cleanup function: Component unmount hone par Pusher connection close karein
     return () => {
       channel.unbind_all();
       channel.unsubscribe();
-      pusher.disconnect(); // Disconnect to avoid memory leaks
+      pusher.disconnect();
     };
-  }, [userData?._id, setMessages]); // Dependency array updated
+  }, [userData?._id, setMessages]);
 
-  // 3. Auto-scroll Logic (Jab bhi naya message aaye, neeche scroll karo)
+  // 3. Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -73,7 +72,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
   return (
     <div className="h-[calc(100vh-180px)] min-h-[500px] flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b bg-white flex items-center justify-between">
+      <div className="px-6 py-4 border-b bg-white flex items-center justify-between z-10 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200">
@@ -90,56 +89,69 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       </div>
 
       {/* Chat Area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 bg-slate-50/30 space-y-4 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#f1f5f9] space-y-4 scroll-smooth">
         {/* Admin Welcome Message */}
-        <div className="flex justify-start items-start gap-3 max-w-[85%]">
+        <div className="flex justify-start items-start gap-3 w-full">
           <div className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center flex-shrink-0">
             <User size={14}/>
           </div>
-          <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm text-sm text-slate-800 font-medium">
-            Hello {userData?.name?.split(" ")[0]}! Main TaxEase Admin hoon. Main aapki kaise help kar sakta hoon?
+          <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-slate-200 shadow-sm text-sm text-slate-800 font-medium max-w-[80%]">
+            Hello {userData?.name?.split(" ")[0] || "User"}! Main TaxEase Admin hoon. Main aapki kaise help kar sakta hoon?
           </div>
         </div>
 
         {/* Dynamic Messages Mapping */}
         {messages.map((msg, i) => {
-          // 🔥 FIX 3: Check karein ki message kisne bheja hai
-          // Ab frontend aur backend dono jagah sender ki ID match kar rahi hai
-          const isUser = msg.sender === userData?._id;
+          // 🔥 FIX 2: Sender ID ko theek se nikalna taaki Object aur String dono chal jayein
+          const senderId = msg.sender?._id || msg.sender;
+          const isMe = senderId === userData?._id; // Agar sender main hoon toh isMe true hoga
           
           return (
-            <div key={msg._id || i} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-              {!isUser && (
+            <div key={msg._id || i} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
+              
+              {/* Admin Avatar on Left */}
+              {!isMe && (
                  <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 shadow-sm flex items-center justify-center flex-shrink-0 mr-2 text-blue-600 font-bold text-[10px]">
                    A
                  </div>
               )}
+
               <div className={`p-3 rounded-2xl max-w-[80%] text-sm shadow-sm leading-relaxed ${
-                isUser 
-                ? 'bg-blue-600 text-white rounded-tr-none' 
-                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
+                isMe 
+                ? 'bg-blue-600 text-white rounded-tr-none' // Right Side (Mera Message)
+                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' // Left Side (Admin Ka Message)
               }`}>
-                {msg.message}
+                
+                <p>{msg.message}</p>
+                
+                {/* 🔥 FIX 3: Time and Tick Marks Added */}
+                <div className={`text-[9px] mt-1 flex items-center gap-1 font-medium ${isMe ? 'justify-end text-blue-100' : 'justify-start text-slate-400'}`}>
+                  {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {isMe && <CheckCheck size={11} className={msg.seen ? "text-blue-300" : "text-blue-100"} />}
+                </div>
+
               </div>
             </div>
           );
         })}
+        {/* Invisible div for auto-scroll to bottom */}
+        <div ref={scrollRef} />
       </div>
 
       {/* Input Bar */}
       <div className="p-4 bg-white border-t">
-        <div className="flex items-center gap-2 bg-slate-50 rounded-2xl px-4 py-2 border border-slate-100 focus-within:border-blue-300 transition-all">
+        <div className="flex items-center gap-2 bg-slate-50 rounded-2xl px-4 py-2 border border-slate-100 focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:bg-white transition-all">
           <input 
             value={input} 
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && input.trim() && onSend()} // Prevent sending empty via Enter
+            onKeyDown={(e) => e.key === 'Enter' && input.trim() && onSend()} 
             placeholder="Type your message here..." 
-            className="flex-1 bg-transparent outline-none text-sm py-3" 
+            className="flex-1 bg-transparent outline-none text-sm py-3 text-slate-800" 
           />
           <button 
             onClick={onSend} 
             disabled={!input.trim()}
-            className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 shadow-lg transition-all active:scale-95 disabled:opacity-50"
+            className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 shadow-md transition-all active:scale-95 disabled:opacity-50"
           >
             <Send size={18} />
           </button>

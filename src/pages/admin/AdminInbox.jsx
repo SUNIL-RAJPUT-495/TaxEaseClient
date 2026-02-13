@@ -19,7 +19,6 @@ const AdminInbox = () => {
         url: SummaryApi.getChat.url,
         method: SummaryApi.getChat.method
       });
-      console.log(res)
       if (res.data.success) setUsers(res.data.data || []);
     } catch (error) {
       console.error("Users load fail", error);
@@ -61,6 +60,7 @@ const AdminInbox = () => {
     return () => {
       channel.unbind_all();
       channel.unsubscribe();
+      pusher.disconnect(); // Memory leak rokne ke liye
     };
   }, [selectedUser]);
 
@@ -84,14 +84,16 @@ const AdminInbox = () => {
         method: SummaryApi.sendChat.method,
         data: {
           message: currentInput,
-          receiver: selectedUser._id,
-          role: 'admin' 
+          receiver: selectedUser._id
         }
       });
       
       if (res.data.success) {
-        // Optimistic update for better speed
-        setMessages((prev) => [...prev, res.data.data]);
+        // Backend se aaya naya message directly screen par daal do (ye khud Right side jayega)
+        setMessages((prev) => {
+          if (prev.find(m => m._id === res.data.data._id)) return prev;
+          return [...prev, res.data.data];
+        });
       }
     } catch (error) {
       alert("Reply failed!");
@@ -169,14 +171,19 @@ const AdminInbox = () => {
             {/* Message History Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#f1f5f9]">
               {messages.map((msg, i) => {
-                // IMPORTANT: Admin message goes to RIGHT, User message to LEFT
-                const isMeAdmin = msg.role === 'admin';
+                
+                // 🔥 ASLI JADU YAHAN HAI 🔥
+                // Agar message bhejne wale (sender) ki ID user ki ID nahi hai,
+                // iska seedha matlab hai ki ye message Admin (yaani aapne) bheja hai.
+                const senderId = msg.sender?._id || msg.sender;
+                const isMeAdmin = senderId !== selectedUser._id;
+
                 return (
-                  <div key={i} className={`flex w-full ${isMeAdmin ? 'justify-end' : 'justify-start'}`}>
+                  <div key={msg._id || i} className={`flex w-full ${isMeAdmin ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] p-3 rounded-2xl shadow-sm text-sm leading-relaxed ${
                       isMeAdmin 
-                        ? 'bg-blue-600 text-white rounded-tr-none' 
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
+                        ? 'bg-blue-600 text-white rounded-tr-none' // Admin Message (Right & Blue)
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' // User Message (Left & White)
                     }`}>
                       <p>{msg.message}</p>
                       <div className={`text-[9px] mt-1 flex items-center justify-end gap-1 font-medium ${isMeAdmin ? 'text-blue-100' : 'text-slate-400'}`}>
