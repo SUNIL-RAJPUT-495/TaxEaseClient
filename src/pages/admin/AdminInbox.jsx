@@ -21,6 +21,7 @@ const AdminInbox = () => {
       });
       // Fallback to empty array if data is null
       if (res.data.success) setUsers(res.data.data || []);
+      console.log(res.data)
     } catch (error) {
       console.error("Users load fail", error);
     }

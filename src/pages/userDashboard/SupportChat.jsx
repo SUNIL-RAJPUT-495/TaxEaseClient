@@ -4,7 +4,6 @@ import { User, Shield, Send } from "lucide-react";
 const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend }) => {
   const scrollRef = useRef(null);
 
-  // 1. Page load par localStorage se messages load karna
   useEffect(() => {
     const savedMessages = localStorage.getItem(`chat_history_${userData?._id}`);
     if (savedMessages) {
@@ -12,13 +11,11 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
     }
   }, [userData?._id, setMessages]);
 
-  // 2. Jab bhi naya message aaye, usey localStorage mein save karna
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(`chat_history_${userData?._id}`, JSON.stringify(messages));
     }
     
-    // Auto scroll logic
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -51,9 +48,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
           </div>
         </div>
 
-        {/* Dynamic Messages */}
         {messages.map((msg, i) => {
-          // Check if message is from user or admin
           const isUser = msg.senderId === userData?._id || msg.role === 'user';
           
           return (
@@ -72,6 +67,7 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
           );
         })}
       </div>
+
 
       {/* Input Bar */}
       <div className="p-4 bg-white border-t">
