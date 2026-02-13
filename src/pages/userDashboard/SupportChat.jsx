@@ -1,32 +1,31 @@
 import React, { useEffect, useRef } from "react";
-import { User, Shield, Send, CheckCheck } from "lucide-react"; // CheckCheck icon add kiya
+import { User, Shield, Send, CheckCheck } from "lucide-react"; 
 import Pusher from 'pusher-js'; 
-import Axios from 'axios'; 
+
+// 🔥 FIX 1: Normal 'axios' hata kar aapka custom Axios import kiya hai (Jisme Token laga hota hai)
+import Axios from "../../utils/axios"; 
 import SummaryApi from "../../common/SummerAPI"; 
 
 const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    // Agar user ka data load nahi hua hai, toh API call mat karo
     if (!userData?._id) return;
 
     // 1. History Fetch Logic
     const fetchChatHistory = async () => {
       try {
-        // 🔥 FIX 1: Hum backend ko "admin" bhejenge param mein, 
-        // Backend automatically is user aur admin ki chat nikal kar dega.
+        // 🔥 FIX 2: Custom Axios use kar rahe hain, toh token apne aap chala jayega
         const res = await Axios({
           url: `${SummaryApi.getChatHistory.url}/admin`, 
-          method: SummaryApi.getChatHistory.method,
-          withCredentials: true 
+          method: SummaryApi.getChatHistory.method
         });
 
         if (res.data.success) {
           setMessages(res.data.data || []);
         }
       } catch (error) {
-        console.error("Error fetching chat history:", error);
+        console.error("Error fetching chat history:", error.response?.data || error.message);
       }
     };
 
@@ -43,7 +42,6 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
       const receiverId = newMessage.receiver?._id || newMessage.receiver;
       const senderId = newMessage.sender?._id || newMessage.sender;
 
-      // Check karo ki message mere chat room ka hai
       if (
           (receiverId && receiverId.toString() === myId) || 
           (senderId && senderId.toString() === myId)
@@ -102,14 +100,12 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
 
         {/* Dynamic Messages Mapping */}
         {messages.map((msg, i) => {
-          // 🔥 FIX 2: Sender ID ko theek se nikalna taaki Object aur String dono chal jayein
           const senderId = msg.sender?._id || msg.sender;
-          const isMe = senderId === userData?._id; // Agar sender main hoon toh isMe true hoga
+          const isMe = senderId === userData?._id; 
           
           return (
             <div key={msg._id || i} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
               
-              {/* Admin Avatar on Left */}
               {!isMe && (
                  <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 shadow-sm flex items-center justify-center flex-shrink-0 mr-2 text-blue-600 font-bold text-[10px]">
                    A
@@ -118,13 +114,12 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
 
               <div className={`p-3 rounded-2xl max-w-[80%] text-sm shadow-sm leading-relaxed ${
                 isMe 
-                ? 'bg-blue-600 text-white rounded-tr-none' // Right Side (Mera Message)
-                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' // Left Side (Admin Ka Message)
+                ? 'bg-blue-600 text-white rounded-tr-none' 
+                : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' 
               }`}>
                 
                 <p>{msg.message}</p>
                 
-                {/* 🔥 FIX 3: Time and Tick Marks Added */}
                 <div className={`text-[9px] mt-1 flex items-center gap-1 font-medium ${isMe ? 'justify-end text-blue-100' : 'justify-start text-slate-400'}`}>
                   {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {isMe && <CheckCheck size={11} className={msg.seen ? "text-blue-300" : "text-blue-100"} />}
@@ -134,7 +129,6 @@ const SupportChat = ({ userData, messages, setMessages, input, setInput, onSend 
             </div>
           );
         })}
-        {/* Invisible div for auto-scroll to bottom */}
         <div ref={scrollRef} />
       </div>
 
