@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { User, Mail, Search, Send, CheckCheck, ShieldCheck } from "lucide-react";
+import { User, Mail, Search, Send, CheckCheck, ShieldCheck, Loader2 } from "lucide-react";
 import Axios from "../../utils/axios";
 import SummaryApi from "../../common/SummerAPI";
 import Pusher from 'pusher-js';
+import { useLocation } from "react-router-dom"; 
 
 const AdminInbox = () => {
   const [users, setUsers] = useState([]);
@@ -10,7 +11,11 @@ const AdminInbox = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [loadingChat, setLoadingChat] = useState(false); // 🔥 New loading state
   const scrollRef = useRef(null);
+  
+  const location = useLocation(); 
+  const preSelectedUserId = location.state?.userId;
 
   // 1. Fetch Users List (Sidebar)
   const fetchChatUsers = async () => {
@@ -25,20 +30,44 @@ const AdminInbox = () => {
     }
   };
 
-  // 2. Fetch Chat History (Active Window)
+  // 🔥 2. Auto-Select & History Trigger Logic
+  // Yeh useEffect tab chalega jab sidebar se user select hoga
+  useEffect(() => {
+    if (selectedUser?._id) {
+        setMessages([]); // Purani chat clear karein
+        fetchUserChat(selectedUser._id);
+    }
+  }, [selectedUser]); // Dependency: selectedUser
+
+  // Auto-select from other pages
+  useEffect(() => {
+    if (preSelectedUserId && users.length > 0) {
+      const userToSelect = users.find(u => u._id === preSelectedUserId);
+      if (userToSelect) setSelectedUser(userToSelect);
+    }
+  }, [preSelectedUserId, users]);
+
+  // 🔥 3. Fetch Chat History Function
   const fetchUserChat = async (userId) => {
     try {
+      setLoadingChat(true); // Loading start
       const res = await Axios({
-        url: SummaryApi.getChatHistory.url + "/" + userId,
+        // URL construction: /api/chat/getUserChatHistory/USER_ID
+        url: `${SummaryApi.getChatHistory.url}/${userId}`,
         method: SummaryApi.getChatHistory.method
       });
-      if (res.data.success) setMessages(res.data.data || []);
+      
+      if (res.data.success) {
+        setMessages(res.data.data || []);
+      }
     } catch (error) {
       console.error("Chat load fail", error);
+    } finally {
+      setLoadingChat(false); // Loading stop
     }
   };
 
-  // 3. Real-time Setup (Pusher WITH SAFETY NET)
+  // 4. Real-time Setup (Pusher)
   useEffect(() => {
     fetchChatUsers();
     const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
@@ -46,28 +75,20 @@ const AdminInbox = () => {
 
     channel.bind('new-message', (data) => {
       const newMessage = data.message;
-      
-      // Sidebar ko har naye message pe update karo (taaki green tick/unread data update ho)
-      fetchChatUsers();
+      fetchChatUsers(); // Sidebar refresh
 
-      if (!selectedUser) return; // Agar koi chat khuli hi nahi hai, toh aage mat badho
+      if (!selectedUser) return; 
 
-      // 🔥 IDs ko completely safe String format mein convert kiya
       const senderId = String(newMessage.sender?._id || newMessage.sender);
       const receiverId = String(newMessage.receiver?._id || newMessage.receiver);
       const currentUserId = String(selectedUser._id);
 
-      // 🔥 PLAN A: Agar ID ekdum perfectly match hoti hai
+      // Agar chat khuli hai toh message append karo
       if (senderId === currentUserId || receiverId === currentUserId) {
         setMessages((prev) => {
-          // Double message bypass
           if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
           return [...prev, newMessage];
         });
-      } 
-      // 🔥 PLAN B (SAFETY NET): Agar backend ne receiver ID nahi bheji, toh history refresh maar do (Silent update)
-      else if (receiverId === "undefined" || !newMessage.receiver) {
-         fetchUserChat(selectedUser._id);
       }
     });
 
@@ -78,18 +99,18 @@ const AdminInbox = () => {
     };
   }, [selectedUser]);
 
-  // 🔥 FIX 1: Smooth Auto-Scroll to Bottom
+  // 5. Smooth Auto-Scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
-  }, [messages]);
+  }, [messages, loadingChat]);
 
-  // 4. Send Reply Logic
+  // 6. Send Reply Logic
   const handleSendReply = async () => {
     if (!input.trim() || !selectedUser) return;
     const currentInput = input;
-    setInput(""); 
+    setInput("");
 
     try {
       const res = await Axios({
@@ -100,12 +121,9 @@ const AdminInbox = () => {
           receiver: selectedUser._id
         }
       });
-      
+
       if (res.data.success) {
-        setMessages((prev) => {
-          if (prev.some(m => String(m._id) === String(res.data.data._id))) return prev;
-          return [...prev, res.data.data];
-        });
+        setMessages((prev) => [...prev, res.data.data]);
       }
     } catch (error) {
       alert("Reply failed!");
@@ -121,26 +139,26 @@ const AdminInbox = () => {
 
   return (
     <div className="flex h-[calc(100vh-120px)] bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden font-sans">
-      
+
       {/* --- Left Sidebar: Users --- */}
       <div className="w-80 border-r border-slate-100 flex flex-col bg-slate-50/50">
         <div className="p-4 border-b bg-white">
           <h2 className="text-xl font-bold text-slate-900 mb-4">Inbox</h2>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search users..." 
+              placeholder="Search users..."
               className="w-full pl-10 pr-4 py-2 bg-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {filteredUsers.length > 0 ? filteredUsers.map((user) => (
-            <div 
+            <div
               key={user._id}
               onClick={() => setSelectedUser(user)}
               className={`p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-50 ${selectedUser?._id === user._id ? 'bg-blue-50 border-r-4 border-r-blue-600 shadow-sm' : 'hover:bg-slate-100'}`}
@@ -180,48 +198,56 @@ const AdminInbox = () => {
               <ShieldCheck className="text-blue-600" size={22} />
             </div>
 
-            {/* Message History Area */}
-            {/* 🔥 FIX 2: Added CSS to Hide Scrollbar perfectly */}
+            {/* Message Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#f1f5f9] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {messages.map((msg, i) => {
-                
-                // 🔥 FIX 3: Object ID vs String ID conflict resolved using String()
+              
+              {/* 🔥 Loading Indicator */}
+              {loadingChat && (
+                <div className="flex justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+                </div>
+              )}
+
+              {/* Messages Mapping */}
+              {!loadingChat && messages.map((msg, i) => {
                 const msgSenderId = String(msg.sender?._id || msg.sender);
                 const isMeAdmin = msgSenderId !== String(selectedUser._id);
 
                 return (
                   <div key={msg._id || i} className={`flex w-full ${isMeAdmin ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] p-3 rounded-2xl shadow-sm text-sm leading-relaxed ${
-                      isMeAdmin 
-                        ? 'bg-blue-600 text-white rounded-tr-none' // Admin Message
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' // User Message
-                    }`}>
+                    <div className={`max-w-[70%] p-3 rounded-2xl shadow-sm text-sm leading-relaxed ${isMeAdmin
+                        ? 'bg-blue-600 text-white rounded-tr-none' 
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' 
+                      }`}>
                       <p>{msg.message}</p>
                       <div className={`text-[9px] mt-1 flex items-center justify-end gap-1 font-medium ${isMeAdmin ? 'text-blue-100' : 'text-slate-400'}`}>
-                         {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                         {isMeAdmin && <CheckCheck size={11} />}
+                        {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {isMeAdmin && <CheckCheck size={11} />}
                       </div>
                     </div>
                   </div>
                 )
               })}
               
-              {/* 🔥 Target Div for Scroll */}
+              {!loadingChat && messages.length === 0 && (
+                <div className="text-center text-slate-400 text-xs mt-10">Start a conversation with {selectedUser.name}</div>
+              )}
+
               <div ref={scrollRef} className="h-1 w-full" />
             </div>
 
             {/* Reply Input Area */}
             <div className="p-4 border-t bg-white">
               <div className="flex items-center gap-3 bg-slate-100 rounded-2xl px-4 py-1 border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:bg-white transition-all">
-                <input 
+                <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && input.trim() && handleSendReply()}
-                  placeholder={`Reply to ${selectedUser.name}...`} 
+                  placeholder={`Reply to ${selectedUser.name}...`}
                   className="flex-1 bg-transparent outline-none text-sm py-3 text-slate-800"
                 />
-                <button 
-                  onClick={handleSendReply} 
+                <button
+                  onClick={handleSendReply}
                   disabled={!input.trim()}
                   className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95 disabled:opacity-50"
                 >

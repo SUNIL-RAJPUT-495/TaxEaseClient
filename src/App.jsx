@@ -24,6 +24,8 @@ import Setting from "./pages/admin/Setting";
 import CreateServicePlan from "../src/pages/admin/services/CreateServicePlan";
 import AdminLogin from "./pages/AdminLogin";
 import AdminInbox from "./pages/admin/AdminInbox";
+import OrderDetails from "./pages/admin/OrderDetailsView";
+import EditServicePlan from "./pages/admin/services/EditServicePlan";
 
 
 // protected Route 
@@ -64,10 +66,13 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<Users />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="order/:id" element={<OrderDetails />} />
             <Route path="services" element={<AllServices />} />
             <Route path="settings" element={<Setting />} />
              <Route path="inbox" element={<AdminInbox />} />
             <Route path="services/create" element={<CreateServicePlan />} />
+            <Route path="chat-inbox" element={<AdminInbox />} />
+            <Route path="/admin/services/edit/:id" element={<EditServicePlan />} />
           </Route>
         </Route>
 

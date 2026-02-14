@@ -25,23 +25,35 @@ const SummaryApi = {
     url: baseURL + "/api/user/all-users",
     method: "get"
   },
+  deletUser : {
+    url:baseURL + "/api/user/delete-user",
+    method:"delete"
+  }
+  ,
   allOrders: {
-    url: baseURL + "/api/payment/all-orders",
+    url: baseURL + "/api/order/all-orders",
     method: "get"
   },
   orderStats: {
-    url: baseURL + "/api/payment/stats",
+    url: baseURL + "/api/order/stats",
     method: "get"
   },
   recentOrders: {
-    url: baseURL + "/api/payment/recent-orders",
+    url: baseURL + "/api/order/recent-orders",
     method: "get"
   },
+
+
   uploadFile:{
     url:baseURL + "/api/file/upload",
     method:"post"
   },
 
+  adminUploadDoc:{
+    url:baseURL +"/api/file/upload-admin",
+    method:"post"
+  }
+,
   //plans
   createPlan: {
     url: baseURL + "/api/plans/create-plans",
@@ -51,14 +63,28 @@ getplan: {
   url: baseURL + "/api/plans/get-plans",
   method: "GET"
 },
+deletePlan:{
+  url: baseURL + "/api/plans/deletePlan",
+  method:"delete"
+}
+,
+editPlan:{
+  url: baseURL + "/api/plans/editPlan",
+  method:"put"
+}
+,
+getAllServices:{
+url:baseURL+"/api/plans/getAllServices",
+method:"get"
+},
 
 createOrder:{
-  url: baseURL + "/api/payment/create-Order",
+  url: baseURL + "/api/order/create-Order",
   method:"post"
 }
 , 
 verifyPayment:{
-  url:baseURL + "/api/payment/verify-payment",
+  url:baseURL + "/api/order/verify-payment",
   method:"post"
 },
 sendChat:{
@@ -72,6 +98,11 @@ getChat:{
 getChatHistory:{
   url:baseURL+"/api/chat/getUserChatHistory",
   method:"get"
+},
+markOrderAsSeen:{
+  url : baseURL + "/api/order/markOrderAsSeen",
+  method:"post"
+
 }
 
 }
