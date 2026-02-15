@@ -31,7 +31,7 @@ const OrderStepper = ({ currentStep, status }) => {
         {/* --- Active Colored Line --- */}
         <div 
           className={`absolute left-0 top-1/2 h-1 -z-10 -translate-y-1/2 rounded-full transition-all duration-500 ease-out mx-4
-            ${status === 'rejected' ? 'bg-red-500' : 'bg-green-500'}
+            ${status === 'rejected' ? 'bg-red-500' : 'bg-blue-500'}
           `}
           style={{ width: `calc(${((currentStep - 1) / (steps.length - 1)) * 100}% - 32px)` }}
         />
@@ -47,14 +47,14 @@ const OrderStepper = ({ currentStep, status }) => {
             const isApproved = status === 'approved' && step.id === 5;
 
             // Circle Styling Logic
-            let circleClass = "bg-white border-slate-200 text-slate-300"; // Default Gray
+            let circleClass = "bg-white border-blue-200 text-slate-300"; // Default Gray
             let icon = <step.icon size={16} />;
 
             if (isRejected) {
               circleClass = "bg-red-500 border-red-500 text-white shadow-lg shadow-red-200"; // Red
               icon = <XCircle size={18} />;
             } else if (isCompleted || isApproved) {
-              circleClass = "bg-green-500 border-green-500 text-white"; // Green Tick
+              circleClass = "bg-blue-500 border-blue-600 text-white"; // Green Tick
               icon = <Check size={18} strokeWidth={3} />;
             } else if (isActive) {
               circleClass = "bg-white border-blue-600 text-blue-600 shadow-lg scale-110"; // Blue Active
@@ -70,7 +70,7 @@ const OrderStepper = ({ currentStep, status }) => {
 
                 {/* 2. Label Text */}
                 <span className={`mt-2 text-[10px] md:text-xs font-bold uppercase tracking-wider hidden sm:block transition-colors
-                  ${isActive ? "text-blue-600" : isRejected ? "text-red-600" : isCompleted ? "text-green-600" : "text-slate-400"}
+                  ${isActive ? "text-blue-600" : isRejected ? "text-red-600" : isCompleted ? "text-blue-600" : "text-slate-400"}
                 `}>
                   {isRejected ? "Rejected" : step.label}
                 </span>

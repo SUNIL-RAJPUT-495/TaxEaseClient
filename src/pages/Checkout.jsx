@@ -242,7 +242,7 @@ const CheckoutPage = () => {
             <div className="lg:col-span-4">
               <div className="sticky top-40 space-y-4">
                 <Card className="shadow-lg border-slate-200 overflow-hidden">
-                    <div className="bg-slate-900 p-4 text-white">
+                    <div className="bg-blue-700 p-4 text-white">
                         <h3 className="text-sm font-bold uppercase tracking-wide opacity-90">Order Summary</h3>
                     </div>
                     
