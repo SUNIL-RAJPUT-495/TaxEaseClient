@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { AlertCircle, Check, ArrowRight, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { AlertCircle, Check, ArrowRight, Loader2, ArrowLeft, Lock } from "lucide-react";
 import Axios from "../../utils/axios";
 import SummaryApi from "../../common/SummerAPI";
+import OrderStepper from "../../component/OrderStepper";
 
 const NoticeHandling = () => {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
 
- 
+  // Static Info
   const serviceInfo = {
     id: "notice-handling",
     title: "Notice Handling",
-    description: "Expert assistance for responding to income tax notices and handling assessments professionally.",
+    description: "Expert assistance for responding to income tax notices and handling assessments professionally to avoid penalties.",
     icon: AlertCircle,
     color: "bg-amber-500",
   };
@@ -23,10 +25,6 @@ const NoticeHandling = () => {
         url: `${SummaryApi.getplan.url}?category=Notice%20Handling`,
         method: SummaryApi.getplan.method,
       });
-
-      console.log("Notice Data:", res.data);
-
-      
       if (res.data.success) {
         setPlans(res.data.data || []);
       }
@@ -44,24 +42,36 @@ const NoticeHandling = () => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-up { animation: fadeUp 0.8s ease-out forwards; }
-      `}</style>
+      {/* --- 1. Fixed Mini Navbar --- */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-[60] flex items-center justify-between px-6 md:px-12 shadow-sm">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-all text-slate-600">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="h-6 w-[1px] bg-slate-200 mx-2 hidden md:block"></div>
+          <h1 className="text-lg font-bold text-slate-800  uppercase tracking-tight">Tax Notice plans</h1>
+        </div>
+        <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
+          <Lock size={14} /><span className="text-[10px] font-black uppercase tracking-wider">Expert Protection</span>
+        </div>
+      </header>
 
-      <main className="pt-24 pb-16">
+      {/* --- 2. Fixed Order Stepper --- */}
+      <div className="fixed top-16 left-0 right-0 z-50 bg-white border-b border-slate-100 shadow-sm">
+        <div className="max-w-5xl mx-auto">
+          <OrderStepper currentStep={1} status="pending"/>
+        </div>
+      </div>
+
+      <main className="pt-44 pb-16">
         
-      
-        <section className="bg-blue-600 py-16">
+        {/* --- Hero Section --- */}
+        <section className="bg-blue-600 py-12 mb-12">
           <div className="container mx-auto px-4 text-center">
             <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl ${serviceInfo.color} flex items-center justify-center shadow-lg`}>
               <serviceInfo.icon className="w-8 h-8 text-white" />
             </div>
-            
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-4">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">
               {serviceInfo.title}
             </h1>
             <p className="text-lg text-blue-100 max-w-2xl mx-auto leading-relaxed">
@@ -70,50 +80,41 @@ const NoticeHandling = () => {
           </div>
         </section>
 
-
-        <div className="container mx-auto px-4 py-16">
-          
-          
+        <div className="container mx-auto px-4">
           {loading ? (
-             <div className="flex justify-center items-center h-40">
-                <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-             </div>
+            <div className="flex flex-col justify-center items-center h-40 gap-3">
+              <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+              <p className="text-slate-400 text-sm font-medium">Fetching expert plans...</p>
+            </div>
           ) : (
+            /* --- Plans Grid --- */
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              
               {plans.length > 0 ? (
                 plans.map((plan, index) => (
                   <div
                     key={plan._id || index}
-                    className={`relative flex flex-col bg-white rounded-xl transition-all duration-300 animate-fade-up overflow-hidden ${
+                    className={`relative flex flex-col bg-white rounded-xl transition-all duration-300 border ${
                       plan.isPopular 
-                        ? "border-2 border-amber-500 shadow-xl scale-[1.02] z-10" 
-                        : "border border-slate-200 hover:border-amber-300 hover:shadow-lg"
+                        ? "border-amber-500 shadow-xl scale-[1.02] z-10" 
+                        : "border-slate-200 hover:border-amber-300 hover:shadow-lg"
                     }`}
-                    style={{ animationDelay: `${index * 100}ms` }}
                   >
                     
-                  
                     {plan.isPopular && (
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-b-lg shadow-sm tracking-wide uppercase">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-black px-3 py-1 rounded-b-lg shadow-sm tracking-widest uppercase">
                         Most Popular
                       </div>
                     )}
 
-                   
                     <div className="p-6 pb-2 pt-8">
-                  
                       <h3 className="text-xl font-bold text-slate-900">{plan.planName}</h3>
-                      <p className="text-sm text-slate-500 mt-1 min-h-[40px]">{plan.description}</p>
+                      <p className="text-sm text-slate-500 mt-1 min-h-[40px] leading-relaxed">{plan.description}</p>
                       <div className="pt-4 flex items-baseline gap-1">
-                        <span className="text-4xl font-extrabold text-slate-900">
-                           ₹{plan.price}
-                        </span>
+                        <span className="text-4xl font-extrabold text-slate-900">₹{plan.price}</span>
                         <span className="text-slate-400 font-medium">/filing</span>
                       </div>
                     </div>
 
-                    
                     <div className="p-6 pt-0 flex-1 flex flex-col">
                       <ul className="space-y-3 mt-4 mb-8 flex-1">
                         {plan.features?.map((feature, i) => (
@@ -125,10 +126,10 @@ const NoticeHandling = () => {
                       </ul>
 
                       <Link
-                         to={`/checkout?service=${serviceInfo.id}&plan=${plan.planName.toLowerCase()}`}
+                        to={`/checkout?planId=${plan._id}`}
                         className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
                           plan.isPopular
-                            ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md hover:shadow-lg"
+                            ? "bg-amber-500 text-white hover:bg-amber-600 shadow-md"
                             : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
                         }`}
                       >
@@ -136,18 +137,28 @@ const NoticeHandling = () => {
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Link>
                     </div>
-
                   </div>
                 ))
               ) : (
-                <div className="col-span-3 text-center text-slate-500">
-                    No Notice Handling plans found.
+                <div className="col-span-3 text-center py-20 bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-bold">
+                    <p>No Notice Handling plans available currently.</p>
                 </div>
               )}
             </div>
           )}
         </div>
       </main>
+
+      {/* Floating Trust Badge */}
+      <div className="fixed bottom-6 left-6 hidden lg:block">
+        <div className="bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
+          <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-white">
+            <AlertCircle size={16} strokeWidth={3} />
+          </div>
+          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-tight">Legal Representation Guaranteed</p>
+        </div>
+      </div>
+
     </div>
   );
 };

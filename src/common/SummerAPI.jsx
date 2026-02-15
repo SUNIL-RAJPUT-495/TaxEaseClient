@@ -42,6 +42,7 @@ const SummaryApi = {
     url: baseURL + "/api/order/recent-orders",
     method: "get"
   },
+  
 
 
   uploadFile:{
@@ -63,6 +64,10 @@ getplan: {
   url: baseURL + "/api/plans/get-plans",
   method: "GET"
 },
+getPlanDetails: {
+    url: "/api/plans/plan-details", 
+    method: "get"
+  },
 deletePlan:{
   url: baseURL + "/api/plans/deletePlan",
   method:"delete"

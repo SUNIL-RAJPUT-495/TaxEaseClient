@@ -88,7 +88,7 @@ const Hero = () => {
                 {/* Primary Button */}
                 <Link 
                   to="/services" 
-                  className="group inline-flex h-12 items-center justify-center rounded-md bg-slate-900 px-8 text-lg font-medium text-white shadow transition-colors hover:bg-slate-900/90"
+                  className="group inline-flex h-12 items-center justify-center rounded-md bg-blue-700 px-8 text-lg font-medium text-white shadow transition-colors hover:bg-blue-900/90"
                 >
                   Get Started
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -96,7 +96,7 @@ const Hero = () => {
                 
                 {/* Outline Button */}
                 <Link 
-                  to="/contact" 
+                  to="/chat" 
                   className="inline-flex h-12 items-center justify-center rounded-md border border-slate-200 bg-white px-8 text-lg font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-900"
                 >
                   Talk to Expert

@@ -10,6 +10,7 @@ export const IndexPage = () => {
   return (
     <div>   
         <Navbar/>
+        
         <Hero/>
        
         <Services/>
