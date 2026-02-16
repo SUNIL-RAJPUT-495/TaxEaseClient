@@ -16,16 +16,16 @@ import DocumentsList from "./DocumentsList";
 import SettingsPage from "./SettingsPage";  
 
 const Dashboard = () => {
-  // 1. Core States
+  // --- 1. Core States ---
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 2. Chat States
+  // --- 2. Chat States ---
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
-  // 3. Settings & Upload States
+  // --- 3. Settings & Upload States ---
   const [profile, setProfile] = useState({ name: "", email: "", phone: "" });
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); 
   const [selectedFile, setSelectedFile] = useState(null); 
@@ -42,7 +42,7 @@ const Dashboard = () => {
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },
   ];
 
-  // Fetch User Logic
+  // --- FETCH USER DETAILS ---
   const fetchUserDetails = async () => {
     try {
       const response = await Axios({
@@ -65,40 +65,73 @@ const Dashboard = () => {
     }
   };
 
+  // --- FETCH CHAT HISTORY (Jab Chat Tab Active Ho) ---
+  useEffect(() => {
+    if (location.pathname === '/dashboard/chat') {
+        const fetchChat = async () => {
+            try {
+                const res = await Axios({
+                    url: `${SummaryApi.getChatHistory.url}/admin`, 
+                    method: SummaryApi.getChatHistory.method
+                });
+                if (res.data.success) {
+                    setMessages(res.data.data || []);
+                }
+            } catch (error) {
+                console.error("Chat load error", error);
+            }
+        };
+        fetchChat();
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     fetchUserDetails();
   }, []);
 
-  // 🔥 YAHAN FIX KIYA GAYA HAI: Naya aur Clean Chat Logic
+  // --- 🔥 OPTIMISTIC CHAT SEND LOGIC ---
   const handleSendMessage = async () => {
     if (!input.trim()) return;
 
-    const currentInput = input;
-    setInput(""); // Message bhejte hi input bar turant khali kar do
+    const msgText = input;
+    const tempId = Date.now().toString(); // Temporary ID for rollback
+
+    setInput(""); // Clear input immediately
+
+    // 1. Show message immediately (Optimistic UI)
+    const tempMsg = {
+        _id: tempId,
+        sender: userData?._id,
+        message: msgText,
+        createdAt: new Date().toISOString(),
+        seen: false,
+    };
+    setMessages((prev) => [...prev, tempMsg]);
 
     try {
-      // Direct API ko call karo, Backend khud samajh jayega ki Admin ko bhejna hai
+      // 2. Send to Backend
       const res = await Axios({
         url: SummaryApi.sendChat.url,
         method: SummaryApi.sendChat.method,
         data: {
-          message: currentInput
+          message: msgText,
+          receiver: "admin" // Backend handles this automatically
         }
       });
       
+      // 3. Update with real data from server (optional, Pusher handles this too)
       if (res.data.success) {
-        // Backend se jo asli message aya hai (sahi ID aur Time ke sath), sirf usko screen pe daalo
-        setMessages((prev) => {
-          if (prev.find(m => m._id === res.data.data._id)) return prev;
-          return [...prev, res.data.data];
-        });
+         // Agar chahein toh ID update kar sakte hain, par Pusher sync karega
       }
     } catch (error) {
-      console.error("Chat Error:", error.response?.data);
+      console.error("Chat Error:", error);
+      // 🔥 Error aane par message hata do
+      setMessages(prev => prev.filter(m => m._id !== tempId));
       alert("Message sending failed. Please try again.");
     }
   };
 
+  // --- FILE UPLOAD LOGIC ---
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) setSelectedFile(file);
@@ -145,7 +178,9 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-950">
+    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-950 relative">
+      
+      {/* 1. SIDEBAR */}
       <Sidebar 
         sidebarOpen={sidebarOpen} 
         setSidebarOpen={setSidebarOpen} 
@@ -155,6 +190,18 @@ const Dashboard = () => {
         handleLogout={handleLogout} 
       />
 
+      {/* 🔥 OVERLAY FIX: 
+          Ye div mobile par sidebar ke piche kaala parda banayega.
+          Is par click karne se sidebar band ho jayega.
+      */}
+      {sidebarOpen && (
+        <div 
+            className="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* 2. MAIN CONTENT */}
       <div className="flex-1 lg:ml-64">
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -171,7 +218,7 @@ const Dashboard = () => {
         </header>
 
         <main className="p-6 space-y-6">
-          {/* Dashboard Home - Services + Documents */}
+          {/* Dashboard Home */}
           {location.pathname === '/dashboard' && (
             <>
               <StatsGrid 
@@ -217,10 +264,10 @@ const Dashboard = () => {
         </main>
       </div>
 
-      {/* --- Upload Modal UI --- */}
+      {/* --- UPLOAD MODAL --- */}
       {isUploadModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
             <div className="flex items-center justify-between p-4 border-b border-slate-100">
               <h3 className="font-bold text-lg text-slate-900">Upload Document</h3>
               <button onClick={() => setIsUploadModalOpen(false)} className="text-slate-400 hover:text-slate-600">

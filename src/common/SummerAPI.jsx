@@ -1,6 +1,3 @@
-
-
-
 export const baseURL = "https://tax-ease-backend.vercel.app";
 
 const SummaryApi = {
