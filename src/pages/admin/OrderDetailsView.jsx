@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCheck, FileText, Upload, X, Eye, CheckCircle, XCircle, ShieldCheck, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, CheckCheck, FileText, Upload, X, Eye, CheckCircle, XCircle, ShieldCheck, Loader2, AlertTriangle, Info, MessageSquareText } from 'lucide-react';
 import Axios from '../../utils/axios';
 import SummaryApi from '../../common/SummerAPI';
 import Pusher from 'pusher-js';
@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 
 const hideScrollbarClass = "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
-// --- 1. CHAT SECTION ---
+// --- 1. CHAT SECTION (Pusher Integrated) ---
 const ChatSection = ({ user }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -33,17 +33,14 @@ const ChatSection = ({ user }) => {
         const channel = pusher.subscribe('chat-channel');
         channel.bind('new-message', (data) => {
             const newMessage = data.message;
-            const senderId = String(newMessage.sender?._id || newMessage.sender);
-            const currentUserId = String(user._id);
-
-            if (senderId === currentUserId || String(newMessage.receiver?._id || newMessage.receiver) === currentUserId) {
+            if (String(newMessage.sender?._id || newMessage.sender) === String(user._id) || String(newMessage.receiver?._id || newMessage.receiver) === String(user._id)) {
                 setMessages(prev => {
                     if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
                     return [...prev, newMessage];
                 });
             }
         });
-        return () => { channel.unbind_all(); channel.unsubscribe(); pusher.disconnect(); };
+        return () => { channel.unsubscribe(); pusher.disconnect(); };
     }, [user]);
 
     useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -87,17 +84,37 @@ const ChatSection = ({ user }) => {
             </div>
             <div className="p-3 border-t bg-white flex gap-2">
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Type a message..." className="flex-1 px-4 py-2 border rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all" />
-                <button onClick={handleSend} className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 active:scale-90 transition-all"><Send size={18} /></button>
+                <button onClick={handleSend} className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all active:scale-90"><Send size={18} /></button>
             </div>
         </div>
     );
 };
 
-// --- 2. DOCUMENTS SECTION ---
-const DocumentsSection = ({ user, documents = [], onStatusUpdate, onAdminUpload }) => {
+// --- 2. DOCUMENTS SECTION (API Integrated Reason) ---
+const DocumentsSection = ({ user, documents = [], onAdminUpload }) => {
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
-    const safeDocuments = Array.isArray(documents) ? documents : [];
+    const [showReasonModal, setShowReasonModal] = useState(false);
+    const [decisionData, setDecisionData] = useState({ status: 'pending', reason: '' });
+
+    useEffect(() => {
+        const fetchDecision = async () => {
+            try {
+                const res = await Axios({
+                    // SummaryApi se :userId hata kar yahan add karein
+                    url: `${SummaryApi.getUserDecision.url.replace("/:userId", "")}/${user._id}`,
+                    method: SummaryApi.getUserDecision.method
+                });
+                if (res.data.success) {
+                    setDecisionData(res.data.data);
+                }
+            } catch (err) { console.error("Decision Fetch Error", err); }
+        };
+        if (user?._id) fetchDecision();
+    }, [user]);
+
+    // 🔥 Page level rejected state (Reason button dikhane ke liye)
+    const isPageRejected = decisionData.status === 'rejected';
 
     const handleUpload = async () => {
         if (!file) return;
@@ -105,7 +122,7 @@ const DocumentsSection = ({ user, documents = [], onStatusUpdate, onAdminUpload 
         const formData = new FormData();
         formData.append("file", file);
         formData.append("userId", user._id);
-
+        
         try {
             const res = await Axios({
                 url: SummaryApi.adminUploadDoc.url,
@@ -115,85 +132,106 @@ const DocumentsSection = ({ user, documents = [], onStatusUpdate, onAdminUpload 
             });
 
             if (res.data.success) {
-                toast.success("Document dispatched to user!");
+                toast.success("New Document Dispatched!");
                 onAdminUpload(res.data.data); 
                 setFile(null);
+                // 💡 Suggestion: Yahan ek API call karke 'filingStatus' ko 'uploaded' 
+                // wapas set kar dena chahiye taaki user ko naya draft dikhe.
             }
-        } catch (err) {
-            console.error(err);
-            toast.error("Upload failed. Check API endpoint.");
-        } finally {
-            setUploading(false);
-        }
+        } catch (err) { toast.error("Upload failed."); }
+        finally { setUploading(false); }
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4 border-b bg-slate-50 font-semibold text-slate-700 flex justify-between items-center">
-                <span>Documents Vault</span>
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold">{safeDocuments.length} Files</span>
+        <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
+            
+            {/* Modal for Rejection Reason (Same as before) */}
+            {showReasonModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowReasonModal(false)} />
+                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative z-10 p-8 text-center animate-in zoom-in duration-200">
+                        <MessageSquareText size={32} className="text-red-600 mx-auto mb-4" />
+                        <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-tighter italic">Client Feedback</h3>
+                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100 text-sm text-red-800 font-bold italic leading-relaxed">
+                            "{decisionData.reason || 'No specific reason provided.'}"
+                        </div>
+                        <button onClick={() => setShowReasonModal(false)} className="mt-6 w-full py-4 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-black transition-all">Close</button>
+                    </div>
+                </div>
+            )}
+
+            <div className={`p-4 border-b font-semibold flex justify-between items-center ${isPageRejected ? 'bg-red-50 text-red-700' : 'bg-slate-50 text-slate-700'}`}>
+                <div className="flex items-center gap-2">
+                    <span>Documents Vault</span>
+                    {isPageRejected && <AlertTriangle size={16} className="animate-pulse" />}
+                </div>
+                <div className="flex items-center gap-2">
+                    {isPageRejected && (
+                        <button onClick={() => setShowReasonModal(true)} className="text-[10px] bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all flex items-center gap-1 shadow-md uppercase font-black">
+                            <Info size={12} /> See Reason
+                        </button>
+                    )}
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-bold">{documents.length} Files</span>
+                </div>
             </div>
 
             <div className={`flex-1 overflow-y-auto p-4 space-y-3 ${hideScrollbarClass}`}>
-                {safeDocuments.length > 0 ? (
-                    safeDocuments.map((doc, i) => {
-                        const isAdminDoc = doc.uploadedBy === 'ADMIN';
+                {documents.map((doc, i) => {
+                    // 🔥 Logic: Document tabhi red dikhega agar wo Admin ne bheja hai 
+                    // AUR current filing status 'rejected' hai. 
+                    // Naye documents (jinka uploadedAt naya hoga) normal dikhne chahiye.
+                    
+                    const isAdminDoc = doc.uploadedBy === 'ADMIN';
+                    const docDate = new Date(doc.uploadedAt || doc.createdAt).getTime();
+                    const rejectionDate = decisionData.updatedAt ? new Date(decisionData.updatedAt).getTime() : 0;
 
-                        return (
-                            <div key={doc._id || i} className={`p-3 border rounded-xl transition-all flex justify-between items-center group shadow-sm ${isAdminDoc
-                                ? 'bg-blue-600 text-white border-blue-500 shadow-blue-100'
-                                : 'bg-slate-50 hover:bg-white border-slate-200'
+                    // Agar ye document rejection ke pehle ka hai, toh red dikhao
+                    const showAsRejected = isPageRejected && isAdminDoc && docDate <= rejectionDate;
+
+                    return (
+                        <div key={doc._id || i} className={`p-3 border rounded-xl transition-all flex justify-between items-center group shadow-sm ${
+                            showAsRejected 
+                            ? 'bg-red-50 border-red-200' // Purana rejected document
+                            : (isAdminDoc ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-50 hover:bg-white border-slate-200') // Naya ya User document
+                        }`}>
+                            <div className="flex gap-3 items-center truncate">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${
+                                    showAsRejected ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'
                                 }`}>
-                                <div className="flex gap-3 overflow-hidden items-center">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${isAdminDoc ? 'bg-white/20 border-white/30 text-white' : 'bg-blue-100 text-blue-600 border-blue-200'}`}>
-                                        <FileText size={20} />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className={`text-sm font-bold truncate ${isAdminDoc ? 'text-white' : 'text-slate-800'}`} title={doc.name}>{doc.name || `Document ${i + 1}`}</p>
-                                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${isAdminDoc ? 'bg-white/20 text-white' : 'bg-yellow-100 text-yellow-700'}`}>
-                                            {isAdminDoc ? 'Sent by Admin' : (doc.status || 'PENDING')}
-                                        </span>
-                                    </div>
+                                    <FileText size={20} />
                                 </div>
-                                <div className="flex gap-1 shrink-0">
-                                    <a href={doc.url} target="_blank" rel="noreferrer" className={`p-2 rounded-lg transition-colors ${isAdminDoc ? 'hover:bg-white/20 text-white' : 'hover:bg-blue-100 text-blue-600'}`}><Eye size={18} /></a>
-
-                                    
+                                <div className="truncate">
+                                    <p className={`text-sm font-bold truncate ${showAsRejected ? 'text-red-900' : (isAdminDoc ? 'text-white' : 'text-slate-800')}`}>{doc.name || `File ${i + 1}`}</p>
+                                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                        showAsRejected ? 'bg-red-200 text-red-700' : 'bg-white/20 text-white'
+                                    }`}>
+                                        {isAdminDoc ? (showAsRejected ? 'Rejected Draft' : 'New Dispatch') : (doc.status || 'PENDING')}
+                                    </span>
                                 </div>
                             </div>
-                        )
-                    })
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 opacity-50 italic text-sm">
-                        <FileText size={40} className="mb-2" />
-                        <p>No documents found.</p>
-                    </div>
-                )}
+                            <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 hover:bg-black/10 rounded-lg"><Eye size={18} /></a>
+                        </div>
+                    )
+                })}
             </div>
 
             <div className="p-4 border-t bg-slate-50 space-y-3">
-                <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer relative hover:border-blue-400 hover:bg-white transition-all group">
+                <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center relative group hover:border-blue-500 transition-all">
                     <input type="file" onChange={e => setFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
-                    {file ? (
-                        <div className="flex items-center justify-center gap-2 text-sm text-blue-600 font-bold">
-                            <CheckCircle size={16} /> {file.name}
-                        </div>
-                    ) : (
-                        <div className="text-slate-400 text-xs flex flex-col items-center gap-1 group-hover:text-blue-500">
-                            <Upload size={20} className="mb-1" />
-                            <span className="font-semibold">Click to Upload & Send to User</span>
-                        </div>
-                    )}
+                    <Upload size={20} className="mx-auto mb-1 text-slate-400 group-hover:text-blue-500" />
+                    <span className="text-xs font-semibold text-slate-400 group-hover:text-blue-600 uppercase">Upload Corrected Files</span>
                 </div>
                 {file && (
-                    <button onClick={handleUpload} disabled={uploading} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50">
-                        {uploading ? "Uploading..." : "Dispatch Now"}
+                    <button onClick={handleUpload} disabled={uploading} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl shadow-lg transition-all active:scale-95">
+                        {uploading ? "Dispatching..." : "Dispatch Corrected Draft"}
                     </button>
                 )}
             </div>
         </div>
     )
 };
+
+// --- 3. MAIN ORDER DETAILS PAGE ---
 const OrderDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -208,31 +246,11 @@ const OrderDetails = () => {
                     const foundOrder = res.data.data.find(o => o._id === id);
                     setOrder(foundOrder);
                 }
-            } catch (error) { toast.error("Order error"); }
+            } catch (error) { toast.error("Fetch failed"); }
             finally { setLoading(false); }
         };
         fetchOrder();
     }, [id]);
-
-    const handleDocStatusUpdate = async (userId, docId, status) => {
-        try {
-            const res = await Axios({
-                url: SummaryApi.updateDocStatus.url,
-                method: SummaryApi.updateDocStatus.method,
-                data: { userId, docId, status }
-            });
-            if (res.data.success) {
-                setOrder(prev => ({
-                    ...prev,
-                    userId: {
-                        ...prev.userId,
-                        documents: prev.userId.documents.map(d => d._id === docId ? { ...d, status } : d)
-                    }
-                }));
-                toast.success(`Marked as ${status}`);
-            }
-        } catch (error) { toast.error("Update failed"); }
-    };
 
     const handleAdminFileUpload = (updatedUser) => { setOrder(prev => ({ ...prev, userId: updatedUser })); };
 
@@ -240,13 +258,13 @@ const OrderDetails = () => {
     if (!order || !order.userId) return <div className="p-10 text-center text-slate-500">Not Found</div>;
 
     return (
-        <div className="p-4 md:p-6 bg-slate-50 min-h-screen space-y-4">
+        <div className="p-4 md:p-6 bg-slate-50 min-h-screen space-y-4 font-sans text-slate-900">
             <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <button onClick={() => navigate('/admin/orders')} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-all font-medium"><ArrowLeft size={20} /></button>
                 <div className="h-6 w-px bg-slate-200"></div>
                 <div>
-                    <h2 className="text-lg font-bold text-slate-900 leading-tight">Order #{order._id.slice(-6).toUpperCase()}</h2>
-                    <p className="text-xs text-slate-500 font-medium">{order.service} • Client: {order.userId.name}</p>
+                    <h2 className="text-lg font-bold text-slate-900 leading-tight tracking-tight italic">ORDER MANAGEMENT</h2>
+                    <p className="text-xs text-slate-500 font-medium italic uppercase tracking-tighter">#{order._id.slice(-6)} • {order.userId.name}</p>
                 </div>
             </div>
 
@@ -255,7 +273,6 @@ const OrderDetails = () => {
                 <DocumentsSection
                     user={order.userId}
                     documents={order.userId.documents || []}
-                    onStatusUpdate={handleDocStatusUpdate}
                     onAdminUpload={handleAdminFileUpload}
                 />
             </div>
