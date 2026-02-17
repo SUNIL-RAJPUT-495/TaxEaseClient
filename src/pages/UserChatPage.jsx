@@ -105,14 +105,14 @@ const UserChatPage = () => {
 
     try {
       // Optimistic UI
-      const tempMsg = {
-        _id: Date.now(),
-        sender: userData._id,
-        message: msgText,
-        createdAt: new Date().toISOString(),
-        seen: false,
-      };
-      setMessages(prev => [...prev, tempMsg]);
+      // const tempMsg = {
+      //   _id: Date.now(),
+      //   sender: userData._id,
+      //   message: msgText,
+      //   createdAt: new Date().toISOString(),
+      //   seen: false,
+      // };
+      // setMessages(prev => [...prev, tempMsg]);
 
       await Axios({
         url: SummaryApi.sendChat.url,

@@ -33,10 +33,8 @@ const ChatSection = ({ user }) => {
     useEffect(() => {
         if (!user?._id) return;
 
-        // Pusher Config
         const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
 
-        // 🔥 CRITICAL FIX: Channel name ab dynamic hai (Backend jaisa)
         const channelName = `chat-${user._id}`; 
         const channel = pusher.subscribe(channelName);
         
@@ -59,14 +57,12 @@ const ChatSection = ({ user }) => {
             channel.unsubscribe();
             pusher.disconnect();
         };
-    }, [user?._id]); // Jab User ID badle, tab channel update ho
+    }, [user?._id]); 
 
-    // 3. Auto Scroll
     useEffect(() => { 
         scrollRef.current?.scrollIntoView({ behavior: "smooth" }); 
     }, [messages]);
 
-    // 4. Send Message Function
     const handleSend = async () => {
         if (!input.trim()) return;
         
@@ -78,7 +74,6 @@ const ChatSection = ({ user }) => {
             });
 
             if (res.data.success) {
-                // Message list mein turant add karo (Optimistic Update)
                 setMessages(prev => [...prev, res.data.data]);
                 setInput("");
             }

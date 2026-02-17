@@ -93,8 +93,8 @@ const AdminInbox = () => {
 
     try {
       // Optimistic Update
-      const tempMsg = { _id: Date.now(), sender: "admin", message: msgText, createdAt: new Date() };
-      setMessages(prev => [...prev, tempMsg]);
+      // const tempMsg = { _id: Date.now(), sender: "admin", message: msgText, createdAt: new Date() };
+      // setMessages(prev => [...prev, tempMsg]);
 
       await Axios({
         url: SummaryApi.sendChat.url,
