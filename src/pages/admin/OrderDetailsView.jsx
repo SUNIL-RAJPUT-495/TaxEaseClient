@@ -9,12 +9,14 @@ import { toast } from 'react-hot-toast';
 const hideScrollbarClass = "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
 
 // --- 1. CHAT SECTION (Pusher Integrated) ---
+// --- 1. CHAT SECTION (Fixed & Styled) ---
 const ChatSection = ({ user }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
+    const [sending, setSending] = useState(false); // 🔥 New: Button loading state
     const scrollRef = useRef(null);
 
-    // 1. Chat History Fetch karna
+    // 1. Chat History Fetch
     useEffect(() => {
         if (!user?._id) return;
         const fetchChat = async () => {
@@ -29,12 +31,11 @@ const ChatSection = ({ user }) => {
         fetchChat();
     }, [user]);
 
-    // 2. 🔥 REAL-TIME PUSHER (Fixed)
+    // 2. 🔥 REAL-TIME PUSHER (Only Source of Truth)
     useEffect(() => {
         if (!user?._id) return;
 
         const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
-
         const channelName = `chat-${user._id}`; 
         const channel = pusher.subscribe(channelName);
         
@@ -51,7 +52,6 @@ const ChatSection = ({ user }) => {
             });
         });
 
-        // Cleanup
         return () => {
             channel.unbind_all();
             channel.unsubscribe();
@@ -59,32 +59,41 @@ const ChatSection = ({ user }) => {
         };
     }, [user?._id]); 
 
+    // 3. Auto Scroll
     useEffect(() => { 
         scrollRef.current?.scrollIntoView({ behavior: "smooth" }); 
     }, [messages]);
 
+    // 4. Send Function (Fixed)
     const handleSend = async () => {
-        if (!input.trim()) return;
+        if (!input.trim() || sending) return;
         
+        const msgText = input;
+        setInput("");       // Input turant clear karo
+        setSending(true);   // Loading start
+
         try {
-            const res = await Axios({
+            await Axios({
                 url: SummaryApi.sendChat.url,
                 method: SummaryApi.sendChat.method,
-                data: { message: input, receiver: user._id }
+                data: { message: msgText, receiver: user._id }
             });
 
-            if (res.data.success) {
-                setMessages(prev => [...prev, res.data.data]);
-                setInput("");
-            }
+            // ❌ REMOVED: setMessages manual update hata diya
+            // ✅ Ab sirf Pusher message layega, isliye double nahi dikhega.
+
         } catch (err) { 
-            toast.error("Message failed"); 
+            toast.error("Message failed");
+            setInput(msgText); // Fail hua to text wapas laao
+        } finally {
+            setSending(false); // Loading stop
         }
     };
 
     return (
         <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-4 border-b bg-slate-50 font-semibold text-slate-700 flex items-center gap-2">
+                <ShieldCheck size={18} className="text-blue-600" />
                 Live Chat with {user?.name}
             </div>
             
@@ -97,6 +106,7 @@ const ChatSection = ({ user }) => {
                                 <p>{msg.message}</p>
                                 <div className={`text-[10px] mt-1 flex justify-end gap-1 ${isMe ? 'text-blue-100' : 'text-slate-400'}`}>
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {isMe && <CheckCheck size={12} />}
                                 </div>
                             </div>
                         </div>
@@ -105,16 +115,31 @@ const ChatSection = ({ user }) => {
                 <div ref={scrollRef} />
             </div>
 
-            <div className="p-3 border-t bg-white flex gap-2">
+            <div className="p-3 border-t bg-white flex gap-2 items-center">
                 <input 
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
                     onKeyDown={e => e.key === 'Enter' && handleSend()} 
                     placeholder="Type a message..." 
-                    className="flex-1 px-4 py-2 border rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all" 
+                    disabled={sending}
+                    className="flex-1 px-4 py-3 border border-slate-200 rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all disabled:opacity-50" 
                 />
-                <button onClick={handleSend} className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all active:scale-90">
-                    Send
+                
+                {/* 🔥 Styled Send Button */}
+                <button 
+                    onClick={handleSend} 
+                    disabled={!input.trim() || sending}
+                    className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center shadow-md ${
+                        !input.trim() || sending
+                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 active:scale-95"
+                    }`}
+                >
+                    {sending ? (
+                        <Loader2 size={20} className="animate-spin" />
+                    ) : (
+                        <Send size={20} className={input.trim() ? "ml-0.5" : ""} />
+                    )}
                 </button>
             </div>
         </div>
