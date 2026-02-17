@@ -22,7 +22,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                 
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Session Expired</h3>
                 <p className="text-slate-500 mb-6 text-sm">
-                    Aapka account delete ho chuka hai ya session expire ho gaya hai. Kripya wapas login karein.
+                    Access Denied: Your account is inactive. Please contact the administrator for assistance. You have been logged out.
                 </p>
 
                 <button 
