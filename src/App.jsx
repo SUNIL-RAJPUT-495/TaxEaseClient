@@ -40,6 +40,7 @@ import { ProtectedRouteAdmin } from "./component/ProtectedRoute";
 
 //components 
 import AuthModal from "./component/AuthModal";
+import SetDocRequirements from "./pages/admin/SetDocRequirements";
 
 function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -100,6 +101,7 @@ function App() {
             <Route path="services/create" element={<CreateServicePlan />} />
             <Route path="chat-inbox" element={<AdminInbox />} />
             <Route path="/admin/services/edit/:id" element={<EditServicePlan />} />
+            <Route path="SetDocRequirements" element={<SetDocRequirements/>}/>
           </Route>
         </Route>
 

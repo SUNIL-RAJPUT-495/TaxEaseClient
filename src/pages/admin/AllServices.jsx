@@ -74,6 +74,14 @@ const AllServices = () => {
           <h1 className="text-2xl font-bold text-slate-900">Service Plans</h1>
           <p className="text-sm text-slate-500">Manage pricing and track subscriptions.</p>
         </div>
+        <div >
+          <button 
+          className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white mx-3 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95" 
+          onClick={() => navigate("/admin/SetDocRequirements")}
+        >
+          <Plus className="w-4 h-4" />
+          Add Required Documents
+        </button>
         <button 
           className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95" 
           onClick={() => navigate("/admin/services/create")}
@@ -81,6 +89,9 @@ const AllServices = () => {
           <Plus className="w-4 h-4" />
           Add New Plan
         </button>
+        </div>
+        
+        
       </div>
 
       {/* --- Plans Grid --- */}

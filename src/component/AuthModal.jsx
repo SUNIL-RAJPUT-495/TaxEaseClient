@@ -30,7 +30,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                     className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 >
                     <LogOut size={18} />
-                    Login Page par Jayein
+                    Login 
                 </button>
             </div>
         </div>
