@@ -1,5 +1,6 @@
 import { IndexPage } from "./pages/IndexPage";
 import { Route, Routes, BrowserRouter } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Services from "./pages/Services";
@@ -36,9 +37,27 @@ import EditServicePlan from "./pages/admin/services/EditServicePlan";
 import { ProtectedRoute } from "./component/ProtectedRoute";
 import { ProtectedRouteAdmin } from "./component/ProtectedRoute";
 
+
+//components 
+import AuthModal from "./component/AuthModal";
+
 function App() {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setShowAuthModal(true);
+    };
+
+    window.addEventListener("on-unauthorized", handleUnauthorized);
+
+    return () => {
+      window.removeEventListener("on-unauthorized", handleUnauthorized);
+    };
+  }, []);
   return (
     <BrowserRouter>
+    <AuthModal isOpen={showAuthModal} />
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<IndexPage />} />

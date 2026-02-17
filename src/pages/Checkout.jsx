@@ -76,13 +76,13 @@ const CheckoutPage = () => {
         }
         try {
             const res = await Axios({
-                // Query params mein ID bhejo
                 url: `${SummaryApi.getPlanDetails.url}?planId=${planId}`,
                 method: SummaryApi.getPlanDetails.method
             });
 
             if(res.data.success) {
                 setPlanDetails(res.data.data);
+                console.log(res.data.data)
             }
         } catch (error) {
             console.error("Plan fetch error", error);
@@ -99,7 +99,7 @@ const CheckoutPage = () => {
 
   // --- Payment Logic ---
   const handlePayment = async () => {
-    if (!formData.name || !formData.email || !formData.phone) return alert("Fill all fields");
+    if (!formData.name || !formData.email || !formData.phone ) return alert("Fill all fields");
     setIsProcessing(true);
 
     const isScriptLoaded = await loadRazorpayScript("https://checkout.razorpay.com/v1/checkout.js");
@@ -116,7 +116,7 @@ const CheckoutPage = () => {
         method: SummaryApi.createOrder.method,
         data: { 
             ...formData, 
-            service: planDetails?.category || "Service", 
+            service: planDetails?.serviceCategory || "Service", 
             plan: planDetails?.planName || "Basic", 
             amount: totalAmount,
             planId: planId 
