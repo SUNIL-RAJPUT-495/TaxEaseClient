@@ -14,6 +14,7 @@ const ChatSection = ({ user }) => {
     const [input, setInput] = useState("");
     const scrollRef = useRef(null);
 
+    // 1. Chat History Fetch karna
     useEffect(() => {
         if (!user?._id) return;
         const fetchChat = async () => {
@@ -28,44 +29,71 @@ const ChatSection = ({ user }) => {
         fetchChat();
     }, [user]);
 
+    // 2. 🔥 REAL-TIME PUSHER (Fixed)
     useEffect(() => {
+        if (!user?._id) return;
+
+        // Pusher Config
         const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
-        const channel = pusher.subscribe('chat-channel');
+
+        // 🔥 CRITICAL FIX: Channel name ab dynamic hai (Backend jaisa)
+        const channelName = `chat-${user._id}`; 
+        const channel = pusher.subscribe(channelName);
+        
+        console.log("🔗 Admin Connected to:", channelName);
+
         channel.bind('new-message', (data) => {
+            console.log("🚀 Message Aaya:", data);
             const newMessage = data.message;
-            if (String(newMessage.sender?._id || newMessage.sender) === String(user._id) || String(newMessage.receiver?._id || newMessage.receiver) === String(user._id)) {
-                setMessages(prev => {
-                    if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
-                    return [...prev, newMessage];
-                });
-            }
+
+            setMessages(prev => {
+                const exists = prev.some(m => String(m._id) === String(newMessage._id));
+                if (exists) return prev;
+                return [...prev, newMessage];
+            });
         });
-        return () => { channel.unsubscribe(); pusher.disconnect(); };
-    }, [user]);
 
-    useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+        // Cleanup
+        return () => {
+            channel.unbind_all();
+            channel.unsubscribe();
+            pusher.disconnect();
+        };
+    }, [user?._id]); // Jab User ID badle, tab channel update ho
 
+    // 3. Auto Scroll
+    useEffect(() => { 
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" }); 
+    }, [messages]);
+
+    // 4. Send Message Function
     const handleSend = async () => {
         if (!input.trim()) return;
+        
         try {
             const res = await Axios({
                 url: SummaryApi.sendChat.url,
                 method: SummaryApi.sendChat.method,
                 data: { message: input, receiver: user._id }
             });
+
             if (res.data.success) {
+                // Message list mein turant add karo (Optimistic Update)
                 setMessages(prev => [...prev, res.data.data]);
                 setInput("");
             }
-        } catch (err) { toast.error("Message failed"); }
+        } catch (err) { 
+            toast.error("Message failed"); 
+        }
     };
 
     return (
         <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="p-4 border-b bg-slate-50 font-semibold text-slate-700 flex items-center gap-2">
-                <ShieldCheck size={18} className="text-blue-600" /> Live Chat with {user.name}
+                Live Chat with {user?.name}
             </div>
-            <div className={`flex-1 overflow-y-auto p-4 space-y-3 bg-[#f1f5f9] ${hideScrollbarClass}`}>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f1f5f9] [&::-webkit-scrollbar]:hidden">
                 {messages.map((msg, i) => {
                     const isMe = String(msg.sender?._id || msg.sender) !== String(user._id);
                     return (
@@ -74,7 +102,6 @@ const ChatSection = ({ user }) => {
                                 <p>{msg.message}</p>
                                 <div className={`text-[10px] mt-1 flex justify-end gap-1 ${isMe ? 'text-blue-100' : 'text-slate-400'}`}>
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    {isMe && <CheckCheck size={12} />}
                                 </div>
                             </div>
                         </div>
@@ -82,9 +109,18 @@ const ChatSection = ({ user }) => {
                 })}
                 <div ref={scrollRef} />
             </div>
+
             <div className="p-3 border-t bg-white flex gap-2">
-                <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder="Type a message..." className="flex-1 px-4 py-2 border rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all" />
-                <button onClick={handleSend} className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all active:scale-90"><Send size={18} /></button>
+                <input 
+                    value={input} 
+                    onChange={e => setInput(e.target.value)} 
+                    onKeyDown={e => e.key === 'Enter' && handleSend()} 
+                    placeholder="Type a message..." 
+                    className="flex-1 px-4 py-2 border rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-1 focus:ring-blue-500 transition-all" 
+                />
+                <button onClick={handleSend} className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all active:scale-90">
+                    Send
+                </button>
             </div>
         </div>
     );

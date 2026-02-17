@@ -42,15 +42,15 @@ const UserChatPage = () => {
   }, []);
 
   useEffect(() => {
-     if (!userData?._id) return;
+    if (!userData?._id) return;
 
+    // --- A. Chat History Fetch ---
     const fetchChatHistory = async () => {
       try {
         const res = await Axios({
           url: `${SummaryApi.getChatHistory.url}/admin`, 
           method: SummaryApi.getChatHistory.method
         });
-
         if (res.data.success) {
           setMessages(res.data.data || []);
         }
@@ -61,32 +61,36 @@ const UserChatPage = () => {
 
     fetchChatHistory();
 
-    const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
-    const channel = pusher.subscribe('chat-channel');
+    const pusher = new Pusher('ae260e3a92e4368b2eed', { 
+        cluster: 'ap2',
+    });
+    
+    // Channel Name
+    const channelName = `chat-${userData._id}`;
+    const channel = pusher.subscribe(channelName);
+
+    console.log("📡 Listening for Admin on:", channelName);
 
     channel.bind('new-message', (data) => {
-      const newMessage = data.message;
-      const myId = String(userData._id);
+      console.log("🚀 Real-time Data Received:", data);
       
-      const isForMe = String(newMessage.receiver) === myId || String(newMessage.receiver?._id) === myId;
-      const isFromMe = String(newMessage.sender) === myId || String(newMessage.sender?._id) === myId;
-
-      if (isForMe || isFromMe) {
-        setMessages((prev) => {
-          if (prev.some(m => String(m._id) === String(newMessage._id))) return prev;
-          return [...prev, newMessage];
-        });
-      }
+      const newMessage = data.message;
+      
+      setMessages((prev) => {
+        const exists = prev.some(m => String(m._id) === String(newMessage._id));
+        if (exists) return prev;
+        
+        return [...prev, newMessage];
+      });
     });
 
     return () => {
+      console.log("🔌 Disconnecting Pusher...");
       channel.unbind_all();
       channel.unsubscribe();
       pusher.disconnect();
     };
   }, [userData?._id]);
-
-  // 3. Scroll to bottom
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
