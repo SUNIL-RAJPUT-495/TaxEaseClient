@@ -12,7 +12,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UploadDocsPage from "./pages/UploadDocsPage";
 import ChatPage from "./pages/UserChatPage";
 import FileStatusPage from "./pages/FileStatusPage";
-
+import ForgotPassword from "./pages/ForgotPassword";
 // ---  Service Pages ---
 import ITRFiling from "./pages/services/ITRFiling";
 import GSTServices from "./pages/services/GSTServices";
@@ -42,12 +42,22 @@ import { ProtectedRouteAdmin } from "./component/ProtectedRoute";
 import AuthModal from "./component/AuthModal";
 import SetDocRequirements from "./pages/admin/SetDocRequirements";
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      setShowAuthModal(true);
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      if (token) {
+        setShowAuthModal(true);
+        
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
     };
 
     window.addEventListener("on-unauthorized", handleUnauthorized);
@@ -58,6 +68,34 @@ function App() {
   }, []);
   return (
     <BrowserRouter>
+    <Toaster 
+        position="top-center" 
+        reverseOrder={false} 
+        toastOptions={{
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            borderRadius: '12px',
+            padding: '16px',
+            fontSize: '14px',
+            maxWidth: '500px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#2563eb', 
+              secondary: '#fff',
+            },
+            duration: 3000,
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444', 
+              secondary: '#fff',
+            },
+            duration: 4000,
+          },
+        }}
+      />
     <AuthModal isOpen={showAuthModal} />
       <Routes>
         <Route element={<MainLayout />}>
@@ -82,12 +120,14 @@ function App() {
           <Route path="/dashboard/documents" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<Dashboard />} />
           <Route path="/dashboard/chat" element={<Dashboard />} />
-          <Route path="/chat" element={<ChatPage />} />
+         
           <Route path="/FileStatusPage" element={<FileStatusPage />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/forgot-password" element={<ForgotPassword/>}/>
+         <Route path="/chat" element={<ChatPage />} />
 
         <Route element={<ProtectedRouteAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>

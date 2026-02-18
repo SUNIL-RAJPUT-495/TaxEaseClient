@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FileText, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Axios from "../utils/axios"
 import  SummaryApi  from "../common/SummerAPI";
+import { toast } from 'react-hot-toast';
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +22,6 @@ const Login = () => {
         data: { email, password }
       });
 
-      console.log("Response:", res.data); 
 
       if (res.data.success) {
         localStorage.setItem("access_token", res.data.token);
@@ -30,13 +30,13 @@ const Login = () => {
           navigate("/"); 
         }, 1000);
       } else {
-        alert("Login Failed: " + res.data.message);
+        toast.error("Login Failed: " + res.data.message);
         setIsLoading(false);
       }
 
     } catch (error) {
       console.error("Login Error:", error);
-      alert("Login Failed: " + (error.response?.data?.message || error.message));
+      toast.error("Login Failed: " + (error.response?.data?.message || error.message));
       setIsLoading(false);
     }
   };

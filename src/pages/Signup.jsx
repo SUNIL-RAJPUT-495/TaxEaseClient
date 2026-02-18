@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FileText, Mail, Lock, Eye, EyeOff, ArrowLeft, User, Phone } from "lucide-react";
-import Axios from  "../utils/axios";
+import Axios from "../utils/axios";
 import SummaryApi from "../common/SummerAPI";
-
+import { toast } from 'react-hot-toast';
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -23,43 +23,42 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      alert("Password Mismatch: Passwords do not match.");
+      toast.error("Password Mismatch: Passwords do not match.");
       return;
     }
 
     if (!agreeTerms) {
-      alert("Terms Required: Please agree to the Terms of Service.");
+      toast.error("Terms Required: Please agree to the Terms of Service.");
       return;
     }
     try {
       const res = await Axios({
-        url:SummaryApi.CreateUser.url,
-        method:SummaryApi.CreateUser.method,
-        data:{...formData,role:"user"}
+        url: SummaryApi.CreateUser.url,
+        method: SummaryApi.CreateUser.method,
+        data: { ...formData, role: "user" }
       });
-      console.log(res.data);
     } catch (error) {
       console.error("Signup Error:", error);
-      alert("Signup Failed: " + (error.response?.data?.message || error.message));
+      toast.error("Signup Failed: " + (error.response?.data?.message || error.message));
       return;
 
-      }
+    }
 
     setIsLoading(true);
 
     setTimeout(() => {
       setIsLoading(false);
-      alert("Account Created! Redirecting...");
+      toast.success("Account Created! Redirecting...");
       navigate("/login");
     }, 1000);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 py-12 font-sans relative overflow-hidden">
-      
+
       {/* --- Custom CSS for Animation --- */}
       <style>{`
         @keyframes fadeUp {
@@ -69,7 +68,7 @@ const Signup = () => {
         .animate-fade-up { animation: fadeUp 0.8s ease-out forwards; }
       `}</style>
 
-      {/* --- Background Decorative Elements --- */}
+
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-10 w-72 h-72 bg-blue-600/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-cyan-400/5 rounded-full blur-3xl" />
@@ -77,8 +76,8 @@ const Signup = () => {
 
       <div className="w-full max-w-md relative z-10">
         {/* Back Button */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 transition-colors text-sm font-medium"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -87,7 +86,7 @@ const Signup = () => {
 
         {/* Main Card */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-xl animate-fade-up overflow-hidden">
-          
+
           {/* Card Header */}
           <div className="flex flex-col space-y-1.5 p-6 pb-2 text-center">
             <Link to="/" className="flex items-center justify-center gap-2 mb-4">
@@ -102,7 +101,7 @@ const Signup = () => {
           {/* Card Content */}
           <div className="p-6 pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              
+
               {/* Name Input */}
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium leading-none text-slate-900">
@@ -145,19 +144,32 @@ const Signup = () => {
 
               {/* Phone Input */}
               <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium leading-none text-slate-900">
+                <label htmlFor="phone" className="text-sm font-medium text-slate-900">
                   Phone Number
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 border-r pr-2 border-slate-200">
+                    <Phone className="w-4 h-4 text-slate-500" />
+                    <span className="text-sm font-medium text-slate-600">+91</span>
+                  </div>
+
                   <input
                     id="phone"
                     name="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
+                    type="text"
+                    placeholder="9876543210"
                     value={formData.phone}
-                    onChange={handleChange}
-                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 pl-10 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+                    maxLength={10}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      handleChange({
+                        target: {
+                          name: "phone",
+                          value: val
+                        }
+                      });
+                    }}
+                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 pl-20 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-all"
                     required
                   />
                 </div>
@@ -237,8 +249,8 @@ const Signup = () => {
               </div>
 
               {/* Submit Button */}
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isLoading}
                 className="inline-flex items-center justify-center rounded-md text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none bg-slate-900 text-white hover:bg-slate-800 h-11 px-8 w-full shadow-sm mt-4"
               >

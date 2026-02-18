@@ -17,7 +17,6 @@ export const IndexPage = () => {
         <Features/>
         <Testimonials/>
         <CTA/>
-         <Footer/>
          
     </div>
   )

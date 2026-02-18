@@ -4,6 +4,7 @@ import { ArrowLeft, ShieldCheck, Check, CreditCard, Loader2, Lock, FileText, Ale
 import Axios from "../utils/axios";
 import SummaryApi from "../common/SummerAPI";
 import OrderStepper from "../component/OrderStepper"; 
+import { toast } from 'react-hot-toast';
 
 // --- Helper Functions ---
 const loadRazorpayScript = (src) => {
@@ -28,7 +29,6 @@ const CheckoutHeader = () => (
   </header>
 );
 
-// ... (Input, Label, Card components same rahenge) ...
 const Card = ({ children, className = "" }) => <div className={`rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm ${className}`}>{children}</div>;
 const CardHeader = ({ children, className = "" }) => <div className={`flex flex-col space-y-1.5 p-6 border-b border-slate-100 ${className}`}>{children}</div>;
 const CardContent = ({ children, className = "" }) => <div className={`p-6 ${className}`}>{children}</div>;
@@ -41,19 +41,15 @@ const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  // 🔥 1. URL se ID nikalo
   const planId = searchParams.get("planId");
 
-  // 🔥 2. State for Dynamic Plan Data
   const [planDetails, setPlanDetails] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(true);
   
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", pan: "" });
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // --- Fetch User & Plan Data ---
   useEffect(() => {
-    // A. Fetch User Profile
     const fetchUserProfile = async () => {
         try {
             const res = await Axios({ url: SummaryApi.userDetails.url, method: SummaryApi.userDetails.method });
@@ -68,7 +64,6 @@ const CheckoutPage = () => {
         } catch (error) { console.log("Guest checkout"); }
     };
 
-    // B. Fetch Selected Plan Details (Dynamic)
     const fetchSelectedPlan = async () => {
         if(!planId) {
             setLoadingPlan(false);
@@ -99,11 +94,14 @@ const CheckoutPage = () => {
 
   // --- Payment Logic ---
   const handlePayment = async () => {
-    if (!formData.name || !formData.email || !formData.phone ) return alert("Fill all fields");
+    if (!formData.name || !formData.email || !formData.phone || !formData.pan ) return toast.error("Fill all fields");
     setIsProcessing(true);
 
     const isScriptLoaded = await loadRazorpayScript("https://checkout.razorpay.com/v1/checkout.js");
-    if (!isScriptLoaded) return setIsProcessing(false);
+    if (!isScriptLoaded) {
+      setIsProcessing(false);
+      return toast.error("Razorpay SDK failed to load. Check your internet connection.");
+    }
 
     // Dynamic Calculations
     const price = planDetails?.price || 0;
@@ -132,8 +130,7 @@ const CheckoutPage = () => {
         name: "TaxEase",
         description: `Payment for ${planDetails?.planName}`,
         order_id: data.order.orderId,
-        
-        // 🔥 YAHAN CHANGE KIYA HAI
+
         handler: async function (response) {
             try {
                 const verifyRes = await Axios({
@@ -147,30 +144,44 @@ const CheckoutPage = () => {
                 });
                 
                 if(verifyRes.data.success) {
+                    toast.success("Payment Successful!"); // Success toast
                     navigate("/upload-documents", { replace: true }); 
                 }
             } catch (err) {
                 console.error("Verification Failed", err);
-                alert("Payment verification failed. Please contact support.");
+                // 🔥 Backend error for verification
+                const errorMsg = err.response?.data?.message || "Payment verification failed. Please contact support.";
+                toast.error(errorMsg);
             }
         },
         theme: { color: "#2563eb" },
+        // User details pre-fill
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone
+        }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response){
-        alert("Payment Failed: " + response.error.description);
+        toast.error("Payment Failed: " + response.error.description);
       });
       rzp.open();
 
     } catch (error) {
       console.error(error);
-      alert("Something went wrong with Payment initialization.");
+      
+      // 🔥 YAHAN CHANGE KIYA HAI: Backend error dikhane ke liye
+      // error.response.data.message woh message hai jo tumne res.status(400).json({message: "..."}) mein likha hai
+      const errorMessage = error.response?.data?.message || "Something went wrong with Payment initialization.";
+      
+      toast.error(errorMessage);
+
     } finally {
       setIsProcessing(false);
     }
   };
-  // --- Loading State ---
   if (loadingPlan) {
       return (
           <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -179,7 +190,6 @@ const CheckoutPage = () => {
       );
   }
 
-  // --- Error State (Invalid ID) ---
   if (!planDetails) {
       return (
           <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4">
@@ -191,7 +201,6 @@ const CheckoutPage = () => {
       );
   }
 
-  // Calculations
   const price = planDetails.price;
   const tax = Math.round(price * 0.18);
   const total = price + tax;
@@ -231,7 +240,7 @@ const CheckoutPage = () => {
                       <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} />
                     </div>
                     <div className="md:col-span-2">
-                      <Label htmlFor="pan">PAN Number (Optional)</Label>
+                      <Label htmlFor="pan">PAN Number </Label>
                       <Input id="pan" name="pan" value={formData.pan} onChange={handleChange} className="uppercase" maxLength={10} />
                     </div>
                 </div>
@@ -249,22 +258,19 @@ const CheckoutPage = () => {
                     <CardContent className="space-y-4 pt-6">
                         <div className="flex justify-between items-start">
                             <div>
-                                {/* 🔥 Backend Data: Category */}
                                 <h4 className="font-bold text-lg text-slate-900">{planDetails.category || "Service"}</h4> 
-                                {/* 🔥 Backend Data: PlanName */}
+                            
                                 <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-700 tracking-wide">
                                     {planDetails.planName}
                                 </span>
                             </div>
                             <div className="text-right">
-                                {/* 🔥 Backend Data: Price */}
                                 <p className="font-bold text-lg text-slate-900">₹{price}</p>
                             </div>
                         </div>
 
                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                             <ul className="space-y-2">
-                                {/* 🔥 Backend Data: Features (Array) */}
                                 {planDetails.features && planDetails.features.slice(0, 4).map((f, i) => (
                                 <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-medium">
                                     <Check className="w-3.5 h-3.5 text-green-600 flex-shrink-0 mt-0.5" /> {f}
