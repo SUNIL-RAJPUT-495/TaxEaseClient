@@ -1,4 +1,4 @@
-export const baseURL = "http://localhost:8080";
+export const baseURL = "https://tax-ease-backend.vercel.app";
 
 const SummaryApi = {
   //  User
@@ -118,6 +118,15 @@ const SummaryApi = {
     url: baseURL + "/api/order/markOrderAsSeen",
     method: "post"
 
+  },
+
+  setDocuments :{
+    url:baseURL + "/api/document/save-doc-requirements",
+    method: "post"
+  },
+  getDocuments : {
+    url : baseURL + "/api/document/get-doc-requirements",
+    method : "get"
   }
 
 }
