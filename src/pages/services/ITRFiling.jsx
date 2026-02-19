@@ -4,20 +4,16 @@ import { FileText, Check, ArrowRight, Loader2, ArrowLeft, Lock } from "lucide-re
 import Axios from "../../utils/axios";
 import SummaryApi from "../../common/SummerAPI";
 import OrderStepper from "../../component/OrderStepper";
+// 🔥 Custom Hook Import
+import { useCheckPurchase } from "../../customHooks/useCheckPurchase";
+import PurchaseGuard from "../../component/PurchaseGuard";
 
 const ITRFiling = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Static Info
-  const serviceInfo = {
-    id: "itr-filing",
-    title: "ITR Filing",
-    description: "Hassle-free income tax return filing for salaried individuals, businesses, and professionals with expert CA assistance.",
-    icon: FileText,
-    color: "bg-blue-500",
-  };
+  const { loading: checkingPurchase } = useCheckPurchase("ITR Filing", "category");
 
   const getdata = async () => {
     try {
@@ -38,11 +34,25 @@ const ITRFiling = () => {
   useEffect(() => {
     getdata();
   }, []);
+  if (checkingPurchase) {
+    return (
+      <PurchaseGuard serviceName="ITR Filing" type="category"/>
+    );
+  }
+
+  // Static Info
+  const serviceInfo = {
+    id: "itr-filing",
+    title: "ITR Filing",
+    description: "Hassle-free income tax return filing for salaried individuals, businesses, and professionals with expert CA assistance.",
+    icon: FileText,
+    color: "bg-blue-500",
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       
-      {/* --- 1. Fixed Mini Navbar (New) --- */}
+      {/* Navbar aur Stepper wahi rahenge */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-[60] flex items-center justify-between px-6 md:px-12 shadow-sm">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-all text-slate-600">
@@ -56,7 +66,6 @@ const ITRFiling = () => {
         </div>
       </header>
 
-      {/* --- 2. Fixed Order Stepper (New) --- */}
       <div className="fixed top-16 left-0 right-0 z-50 bg-white border-b border-slate-100 shadow-sm">
         <div className="max-w-5xl mx-auto">
           <OrderStepper currentStep={1} status="pending"/>
@@ -64,8 +73,6 @@ const ITRFiling = () => {
       </div>
 
       <main className="pt-44 pb-16">
-        
-        {/* --- Hero Section --- */}
         <section className="bg-blue-600 py-12 mb-12">
           <div className="container mx-auto px-4 text-center">
             <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl ${serviceInfo.color} flex items-center justify-center shadow-lg`}>
@@ -90,21 +97,12 @@ const ITRFiling = () => {
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {plans && plans.length > 0 ? (
                 plans.map((plan, index) => (
-                  <div
-                    key={plan._id || index}
-                    className={`relative flex flex-col bg-white rounded-xl transition-all duration-300 border ${
-                      plan.isPopular 
-                        ? "border-blue-600 shadow-xl scale-[1.02] z-10" 
-                        : "border-slate-200 hover:border-blue-300 hover:shadow-lg"
-                    }`}
-                  >
-                    
+                  <div key={plan._id || index} className={`relative flex flex-col bg-white rounded-xl transition-all duration-300 border ${plan.isPopular ? "border-blue-600 shadow-xl scale-[1.02] z-10" : "border-slate-200 hover:border-blue-300 hover:shadow-lg"}`}>
                     {plan.isPopular && (
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-b-lg shadow-sm tracking-widest uppercase">
                         Most Popular
                       </div>
                     )}
-
                     <div className="p-6 pb-2 pt-8">
                       <h3 className="text-xl font-bold text-slate-900">{plan.planName}</h3>
                       <p className="text-sm text-slate-500 mt-1 min-h-[40px] leading-relaxed">{plan.description}</p>
@@ -113,7 +111,6 @@ const ITRFiling = () => {
                         <span className="text-slate-400 font-medium">/filing</span>
                       </div>
                     </div>
-
                     <div className="p-6 pt-0 flex-1 flex flex-col">
                       <ul className="space-y-3 mt-4 mb-8 flex-1">
                         {plan.features?.map((feature, i) => (
@@ -123,15 +120,7 @@ const ITRFiling = () => {
                           </li>
                         ))}
                       </ul>
-
-                      <Link
-                        to={`/checkout?planId=${plan._id}`}
-                        className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
-                          plan.isPopular
-                            ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
-                            : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                        }`}
-                      >
+                      <Link to={`/checkout?planId=${plan._id}`} className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${plan.isPopular ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50"}`}>
                         Choose {plan.planName}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Link>
@@ -147,17 +136,6 @@ const ITRFiling = () => {
           )}
         </div>
       </main>
-
-      {/* Floating Trust Badge */}
-      <div className="fixed bottom-6 left-6 hidden lg:block">
-        <div className="bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
-            <Check size={16} strokeWidth={3} />
-          </div>
-          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-tight">Income Tax Expert Verified</p>
-        </div>
-      </div>
-
     </div>
   );
 };

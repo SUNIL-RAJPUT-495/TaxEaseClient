@@ -194,7 +194,7 @@ console.log(itrPlans)
 
                         {/* Button */}
                         <Link 
-                          to={`/checkout?planId=${plan._id}`}
+                          to={`/services/${service.id}`}
                           className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
                             plan.popular 
                               ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg" 

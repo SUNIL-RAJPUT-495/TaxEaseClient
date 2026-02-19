@@ -25,7 +25,6 @@ const FileStatusPage = () => {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // 🔥 1. Added missing state for selection
   const [selectedDocId, setSelectedDocId] = useState(null);
 
   const handleDownload = async (url, filename, fileId) => {
@@ -182,7 +181,6 @@ const FileStatusPage = () => {
                             {downloadingId === file._id ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
                         </button>
                         
-                        {/* 🔥 FIXED BUTTONS: Now inside loop and using file._id */}
                         {file.docStatus === 'pending' && (
                             <div className="flex gap-2">
                                 <button onClick={() => { setSelectedDocId(file._id); setIsRejectModalOpen(true); }} className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100">Reject</button>

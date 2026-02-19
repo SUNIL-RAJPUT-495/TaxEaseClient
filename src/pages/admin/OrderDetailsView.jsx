@@ -12,7 +12,7 @@ const hideScrollbarClass = "[&::-webkit-scrollbar]:hidden [-ms-overflow-style:no
 const ChatSection = ({ user }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
-    const [sending, setSending] = useState(false); 
+    const [sending, setSending] = useState(false);
     const scrollRef = useRef(null);
 
 
@@ -35,9 +35,9 @@ const ChatSection = ({ user }) => {
         if (!user?._id) return;
 
         const pusher = new Pusher('ae260e3a92e4368b2eed', { cluster: 'ap2' });
-        const channelName = `chat-${user._id}`; 
+        const channelName = `chat-${user._id}`;
         const channel = pusher.subscribe(channelName);
-        
+
         console.log("🔗 Admin Connected to:", channelName);
 
         channel.bind('new-message', (data) => {
@@ -56,18 +56,18 @@ const ChatSection = ({ user }) => {
             channel.unsubscribe();
             pusher.disconnect();
         };
-    }, [user?._id]); 
+    }, [user?._id]);
 
-    useEffect(() => { 
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" }); 
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     const handleSend = async () => {
         if (!input.trim() || sending) return;
-        
+
         const msgText = input;
-        setInput("");      
-        setSending(true);  
+        setInput("");
+        setSending(true);
 
         try {
             await Axios({
@@ -77,11 +77,11 @@ const ChatSection = ({ user }) => {
             });
 
 
-        } catch (err) { 
+        } catch (err) {
             toast.error("Message failed");
             setInput(msgText);
         } finally {
-            setSending(false); 
+            setSending(false);
         }
     };
 
@@ -91,7 +91,7 @@ const ChatSection = ({ user }) => {
                 <ShieldCheck size={18} className="text-blue-600" />
                 Live Chat with {user?.name}
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f1f5f9] [&::-webkit-scrollbar]:hidden">
                 {messages.map((msg, i) => {
                     const isMe = String(msg.sender?._id || msg.sender) !== String(user._id);
@@ -111,24 +111,22 @@ const ChatSection = ({ user }) => {
             </div>
 
             <div className="p-3 border-t bg-white flex gap-2 items-center">
-                <input 
-                    value={input} 
-                    onChange={e => setInput(e.target.value)} 
-                    onKeyDown={e => e.key === 'Enter' && handleSend()} 
-                    placeholder="Type a message..." 
+                <input
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSend()}
+                    placeholder="Type a message..."
                     disabled={sending}
-                    className="flex-1 px-4 py-3 border border-slate-200 rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all disabled:opacity-50" 
+                    className="flex-1 px-4 py-3 border border-slate-200 rounded-full text-sm outline-none bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all disabled:opacity-50"
                 />
-                
-                {/* 🔥 Styled Send Button */}
-                <button 
-                    onClick={handleSend} 
+
+                <button
+                    onClick={handleSend}
                     disabled={!input.trim() || sending}
-                    className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center shadow-md ${
-                        !input.trim() || sending
+                    className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center shadow-md ${!input.trim() || sending
                         ? "bg-slate-100 text-slate-400 cursor-not-allowed"
                         : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200 active:scale-95"
-                    }`}
+                        }`}
                 >
                     {sending ? (
                         <Loader2 size={20} className="animate-spin" />
@@ -141,11 +139,9 @@ const ChatSection = ({ user }) => {
     );
 };
 
-
 const DocumentsSection = ({ user, activeService, onAdminUpload }) => {
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
-    const [showReasonModal, setShowReasonModal] = useState(false); // 🔥 Modal State
 
     const documents = activeService?.documents || [];
     const isServiceRejected = activeService?.status === 'rejected';
@@ -156,19 +152,19 @@ const DocumentsSection = ({ user, activeService, onAdminUpload }) => {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("userId", user._id);
-        formData.append("activeServiceId", activeService._id); 
-        
+        formData.append("activeServiceId", activeService._id);
+
         try {
             const res = await Axios({
                 url: SummaryApi.adminUploadDoc.url,
                 method: SummaryApi.adminUploadDoc.method,
                 data: formData,
-                headers: { "Content-Type": "multipart/form-data" } 
+                headers: { "Content-Type": "multipart/form-data" }
             });
 
             if (res.data.success) {
                 toast.success("Document Dispatched!");
-                onAdminUpload(res.data.data); 
+                onAdminUpload(res.data.data);
                 setFile(null);
             }
         } catch (err) { toast.error("Upload failed."); }
@@ -177,40 +173,19 @@ const DocumentsSection = ({ user, activeService, onAdminUpload }) => {
 
     return (
         <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
-            
-            {/* 🔥 REJECTION REASON MODAL */}
-            {showReasonModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowReasonModal(false)} />
-                    <div className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative z-10 p-8 text-center animate-in zoom-in duration-200">
-                        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AlertCircle size={32} />
-                        </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-2 uppercase italic tracking-tight">Client Feedback</h3>
-                        <div className="bg-red-50 p-5 rounded-2xl border border-red-100 text-sm text-red-800 font-bold italic leading-relaxed mb-6">
-                            "{activeService?.serviceRejectionReason || 'No specific reason provided.'}"
-                        </div>
-                        <button 
-                            onClick={() => setShowReasonModal(false)} 
-                            className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-black transition-all active:scale-95"
-                        >
-                            Got it
-                        </button>
-                    </div>
-                </div>
-            )}
 
-            {/* HEADER WITH REASON BUTTON */}
+
+
+            {/* HEADER */}
             <div className={`p-4 border-b font-semibold flex justify-between items-center ${isServiceRejected ? 'bg-red-50 text-red-700 border-red-100' : 'bg-slate-50 text-slate-700'}`}>
                 <div className="flex items-center gap-2">
                     <FileCheck size={18} className={isServiceRejected ? 'text-red-500' : 'text-blue-500'} />
                     <span>Documents Vault</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
-                    {/* 🔥 SHOW REASON BUTTON (Only if Rejected) */}
                     {isServiceRejected && (
-                        <button 
+                        <button
                             onClick={() => setShowReasonModal(true)}
                             className="text-[10px] bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all flex items-center gap-1 shadow-md uppercase font-black"
                         >
@@ -221,6 +196,7 @@ const DocumentsSection = ({ user, activeService, onAdminUpload }) => {
                 </div>
             </div>
 
+            {/* DOCUMENTS LIST */}
             <div className={`flex-1 overflow-y-auto p-4 space-y-3`}>
                 {documents.map((doc, i) => {
                     const isAdminDoc = doc.uploadedBy === 'ADMIN';
@@ -228,33 +204,38 @@ const DocumentsSection = ({ user, activeService, onAdminUpload }) => {
                     const isDocApproved = doc.docStatus === 'approved';
 
                     return (
-                        <div key={doc._id || i} className={`p-3 border rounded-xl transition-all flex justify-between items-center group shadow-sm ${
-                            isDocRejected 
-                                ? 'bg-red-50 border-red-200' 
-                                : isDocApproved 
+                        <div key={doc._id || i} className="flex flex-col gap-2"> 
+                            <div className={`p-3 border rounded-xl transition-all flex justify-between items-center group shadow-sm ${isDocRejected
+                                ? 'bg-red-50 border-red-200'
+                                : isDocApproved
                                     ? 'bg-green-50 border-green-200'
-                                    : isAdminDoc 
-                                        ? 'bg-blue-600 text-white border-blue-500' 
+                                    : isAdminDoc
+                                        ? 'bg-blue-600 text-white border-blue-500'
                                         : 'bg-indigo-50 border-indigo-100'
-                        }`}>
-                            <div className="flex gap-3 items-center truncate">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${
-                                    isDocRejected ? 'bg-red-100 text-red-600' : isDocApproved ? 'bg-green-100 text-green-600' : 'bg-white/10 text-white'
-                                }`}>
-                                    <FileText size={20} />
+                            }`}>
+                                <div className="flex gap-3 items-center truncate">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${isDocRejected ? 'bg-red-100 text-red-600' : isDocApproved ? 'bg-green-100 text-green-600' : 'bg-white/10 text-white'
+                                        }`}>
+                                        <FileText size={20} />
+                                    </div>
+                                    <div className="truncate">
+                                        <p className={`text-sm font-bold truncate ${isAdminDoc && !isDocRejected && !isDocApproved ? 'text-white' : 'text-slate-800'}`}>
+                                            {doc.name || `File ${i + 1}`}
+                                        </p>
+                                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${isDocRejected ? 'bg-red-200 text-red-700' : isDocApproved ? 'bg-green-200 text-green-700' : isAdminDoc ? 'bg-white/20 text-white' : 'bg-indigo-200 text-indigo-700'
+                                            }`}>
+                                            {isAdminDoc ? (isDocRejected ? 'Rejected' : isDocApproved ? 'Approved' : 'Draft') : 'Client Upload'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="truncate">
-                                    <p className={`text-sm font-bold truncate ${isAdminDoc && !isDocRejected && !isDocApproved ? 'text-white' : 'text-slate-800'}`}>
-                                        {doc.name || `File ${i + 1}`}
-                                    </p>
-                                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                                        isDocRejected ? 'bg-red-200 text-red-700' : isDocApproved ? 'bg-green-200 text-green-700' : isAdminDoc ? 'bg-white/20 text-white' : 'bg-indigo-200 text-indigo-700'
-                                    }`}>
-                                        {isAdminDoc ? (isDocRejected ? 'Rejected' : isDocApproved ? 'Approved' : 'Draft') : 'Client Upload'}
-                                    </span>
-                                </div>
+                                <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 hover:bg-black/10 rounded-lg"><Eye size={18} /></a>
                             </div>
-                            <a href={doc.url} target="_blank" rel="noreferrer" className="p-2 hover:bg-black/10 rounded-lg"><Eye size={18} /></a>
+
+                            {isDocRejected && doc.docRejectionReason && (
+                                <div className="mx-2 p-2 bg-red-50 border-l-4 border-red-500 rounded text-[10px] text-red-700 font-bold italic">
+                                    Reason: {doc.docRejectionReason}
+                                </div>
+                            )}
                         </div>
                     )
                 })}
@@ -276,8 +257,6 @@ const DocumentsSection = ({ user, activeService, onAdminUpload }) => {
         </div>
     )
 };
-
-// --- 3. MAIN ORDER DETAILS PAGE ---
 const OrderDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -298,7 +277,6 @@ const OrderDetails = () => {
         fetchOrder();
     }, [id]);
 
-    // 🔥 Find active service related to this order
     const activeService = order?.userId?.activeServices?.find(s => String(s.orderId) === String(order._id));
 
     const handleAdminFileUpload = (updatedUser) => { setOrder(prev => ({ ...prev, userId: updatedUser })); };
@@ -318,10 +296,9 @@ const OrderDetails = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                {/* Chat as usual */}
+          
                 <ChatSection user={order.userId} />
-                
-                {/* Updated Documents Section */}
+
                 <DocumentsSection
                     user={order.userId}
                     activeService={activeService}

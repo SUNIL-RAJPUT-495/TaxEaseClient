@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Calculator, Check, ArrowRight, Loader2, ArrowLeft, Lock } from "lucide-react";
+import { Calculator, Check, ArrowRight, Loader2, ArrowLeft, Lock ,FileText} from "lucide-react";
 import Axios from "../../utils/axios";
 import SummaryApi from "../../common/SummerAPI";
 import OrderStepper from "../../component/OrderStepper";
+import { useCheckPurchase } from "../../customHooks/useCheckPurchase";
+import PurchaseGuard from "../../component/PurchaseGuard";
 
 const TaxPlanning = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-
+ const { loading: checkingPurchase } = useCheckPurchase("Tax Planning", "category");
   // Static Info
   const serviceInfo = {
     id: "tax-planning",
@@ -39,9 +41,15 @@ const TaxPlanning = () => {
     getdata();
   }, []);
 
+ if (checkingPurchase) {
+    return (
+      <PurchaseGuard serviceName="tax-planning" type="category"/>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-      
+
       {/* --- 1. Fixed Mini Navbar --- */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-[60] flex items-center justify-between px-6 md:px-12 shadow-sm">
         <div className="flex items-center gap-3">
@@ -59,12 +67,12 @@ const TaxPlanning = () => {
       {/* --- 2. Fixed Order Stepper --- */}
       <div className="fixed top-16 left-0 right-0 z-50 bg-white border-b border-slate-100 shadow-sm">
         <div className="max-w-5xl mx-auto">
-          <OrderStepper currentStep={1} status="pending"/>
+          <OrderStepper currentStep={1} status="pending" />
         </div>
       </div>
 
       <main className="pt-44 pb-16">
-        
+
         {/* --- Hero Section --- */}
         <section className="bg-blue-600 py-12 mb-12">
           <div className="container mx-auto px-4 text-center">
@@ -93,13 +101,12 @@ const TaxPlanning = () => {
                 plans.map((plan, index) => (
                   <div
                     key={plan._id || index}
-                    className={`relative flex flex-col bg-white rounded-xl transition-all duration-300 border ${
-                      plan.isPopular 
-                        ? "border-emerald-500 shadow-xl scale-[1.02] z-10" 
+                    className={`relative flex flex-col bg-white rounded-xl transition-all duration-300 border ${plan.isPopular
+                        ? "border-emerald-500 shadow-xl scale-[1.02] z-10"
                         : "border-slate-200 hover:border-emerald-300 hover:shadow-lg"
-                    }`}
+                      }`}
                   >
-                    
+
                     {plan.isPopular && (
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-b-lg shadow-sm tracking-widest uppercase">
                         Most Popular
@@ -127,11 +134,10 @@ const TaxPlanning = () => {
 
                       <Link
                         to={`/checkout?planId=${plan._id}`}
-                        className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${
-                          plan.isPopular
+                        className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${plan.isPopular
                             ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md"
                             : "border border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
-                        }`}
+                          }`}
                       >
                         Choose {plan.planName}
                         <ArrowRight className="w-4 h-4 ml-2" />
@@ -141,7 +147,7 @@ const TaxPlanning = () => {
                 ))
               ) : (
                 <div className="col-span-3 text-center py-20 bg-white rounded-xl border border-dashed border-slate-300 text-slate-400 font-bold">
-                    <p>No Tax Planning strategies available right now.</p>
+                  <p>No Tax Planning strategies available right now.</p>
                 </div>
               )}
             </div>
