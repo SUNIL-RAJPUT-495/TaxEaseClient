@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// 🔥 useSearchParams add kiya yahan
+import { useNavigate, useSearchParams } from "react-router-dom"; 
 import { 
   CloudUpload, FileText, X, ShieldCheck, CheckCircle2, 
   ArrowRight, Download, Files, Loader2, ArrowLeft, Lock
@@ -7,10 +8,13 @@ import {
 import Axios from "../utils/axios";
 import SummaryApi from "../common/SummerAPI";
 import OrderStepper from "../component/OrderStepper";
-import toast from "react-hot-toast"; // 🔥 Toast Import
+import toast from "react-hot-toast";
 
 const UploadDocsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const activeServiceId = searchParams.get("serviceId"); 
+  
   const fileInputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadedDocs, setUploadedDocs] = useState([]);
@@ -21,12 +25,20 @@ const UploadDocsPage = () => {
   // --- Fetching Documents ---
   useEffect(() => {
     const fetchDocs = async () => {
+        if (!activeServiceId) {
+            toast.error("Invalid URL: Service ID missing");
+            setFetching(false);
+            return;
+        }
+
         try {
             const res = await Axios({
-                url: SummaryApi.getUploadedDocs?.url,
-                method: SummaryApi.getUploadedDocs?.method
+                url: `${SummaryApi.getMyDocuments?.url}?activeServiceId=${activeServiceId}`,
+                method: SummaryApi.getMyDocuments?.method
             });
-            if (res.data.success) setUploadedDocs(res.data.data || []);
+            if (res.data.success) {
+                setUploadedDocs(res.data.data || []);
+            }
         } catch (error) { 
           console.log(error);
           toast.error("Failed to load vault documents");
@@ -34,7 +46,7 @@ const UploadDocsPage = () => {
         finally { setFetching(false); }
     };
     fetchDocs();
-  }, []);
+  }, [activeServiceId]); 
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -50,13 +62,18 @@ const UploadDocsPage = () => {
     setSelectedFiles(prev => [...prev, ...validFiles]);
   };
 
-  // --- 🔥 Improved Upload Logic ---
   const handleUploadToServer = async () => {
     if (selectedFiles.length === 0) return;
+
+    if (!activeServiceId) {
+        return toast.error("Cannot upload: Service ID missing");
+    }
+
     setUploading(true);
     
     const formData = new FormData();
     selectedFiles.forEach(file => formData.append("file", file));
+    formData.append("activeServiceId", activeServiceId); 
     
     try {
       const res = await Axios({
@@ -69,12 +86,13 @@ const UploadDocsPage = () => {
       if (res.data.success) {
         toast.success("Documents uploaded successfully!");
         
-        // Backend se jo naye docs aaye hain unhe list mein upar add karo
-        // Agar backend single file bhejta hai: [res.data.data, ...uploadedDocs]
-        // Agar multiple files: [...res.data.data, ...uploadedDocs]
-        const newlyUploaded = Array.isArray(res.data.data) ? res.data.data : [res.data.data];
-        setUploadedDocs(prev => [...newlyUploaded, ...prev]);
+        const service = res.data.data.activeServices.find(s => s._id === activeServiceId);
         
+        if(service && service.documents) {
+             const userUploadedOnly = service.documents.filter(d => d.uploadedBy === 'USER');
+             setUploadedDocs(userUploadedOnly.sort((a,b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)));
+        }
+
         setSelectedFiles([]); 
       }
     } catch (error) { 
@@ -154,7 +172,7 @@ const UploadDocsPage = () => {
                       <button onClick={(e) => { e.stopPropagation(); setSelectedFiles(selectedFiles.filter((_, i) => i !== index)); }} className="text-slate-300 hover:text-red-500"><X size={20} /></button>
                     </div>
                   ))}
-                  <button onClick={(e) => { e.stopPropagation(); handleUploadToServer(); }} disabled={uploading} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200">
+                  <button onClick={(e) => { e.stopPropagation(); handleUploadToServer(); }} disabled={uploading || !activeServiceId} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black mt-4 hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200 disabled:opacity-50">
                     {uploading ? <Loader2 className="animate-spin" size={20} /> : <CloudUpload size={20} />}
                     {uploading ? "UPLOADING..." : `UPLOAD ${selectedFiles.length} DOCUMENTS`}
                   </button>
@@ -182,7 +200,6 @@ const UploadDocsPage = () => {
                               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all"><FileText size={20} /></div>
                               <div>
                                  <p className="text-sm font-bold text-slate-800">{doc.name}</p>
-                                 
                               </div>
                            </div>
                            <a href={doc.url} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-colors"><Download size={18} /></a>
@@ -207,7 +224,8 @@ const UploadDocsPage = () => {
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status</p>
             <p className="text-sm font-black text-slate-700">Documents Uploaded: {uploadedDocs.length}</p>
           </div>
-          <button onClick={() => navigate("/FileStatusPage")} className="w-full md:w-auto bg-blue-700 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-900 shadow-xl transition-all flex items-center justify-center gap-3">
+          {/* 🔥 Agle page par jane par bhi ID aage bhej do */}
+          <button onClick={() => navigate(`/FileStatusPage?serviceId=${activeServiceId}`)} className="w-full md:w-auto bg-blue-700 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-900 shadow-xl transition-all flex items-center justify-center gap-3">
             GO TO STATUS <ArrowRight size={20} />
           </button>
         </div>

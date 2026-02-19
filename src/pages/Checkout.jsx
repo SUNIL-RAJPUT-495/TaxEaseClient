@@ -144,9 +144,9 @@ const CheckoutPage = () => {
                 });
                 
                 if(verifyRes.data.success) {
-                    toast.success("Payment Successful!"); // Success toast
-                    navigate("/upload-documents", { replace: true }); 
-                }
+                    toast.success("Payment Successful!"); 
+                    const newServiceId = verifyRes.data.activeServiceId || verifyRes.data.data?.activeServiceId;
+                   navigate(`/upload-documents?serviceId=${newServiceId}`, { replace: true });}
             } catch (err) {
                 console.error("Verification Failed", err);
                 // 🔥 Backend error for verification
@@ -172,8 +172,6 @@ const CheckoutPage = () => {
     } catch (error) {
       console.error(error);
       
-      // 🔥 YAHAN CHANGE KIYA HAI: Backend error dikhane ke liye
-      // error.response.data.message woh message hai jo tumne res.status(400).json({message: "..."}) mein likha hai
       const errorMessage = error.response?.data?.message || "Something went wrong with Payment initialization.";
       
       toast.error(errorMessage);

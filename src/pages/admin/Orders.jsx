@@ -9,7 +9,7 @@ function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("all"); // 'all', 'unseen', 'paid', 'failed'
+  const [activeTab, setActiveTab] = useState("all"); 
   const navigate = useNavigate();
 
   const fetchAllOrders = async () => {
@@ -32,21 +32,17 @@ function Orders() {
     fetchAllOrders();
   }, []);
 
-  // 🔥 API Call to mark as seen and then Navigate
   const handleManageOrder = async (orderId) => {
     try {
-      // 1. API call to update database
       await Axios({
         url: SummaryApi.markOrderAsSeen.url,
         method: SummaryApi.markOrderAsSeen.method,
         data: { orderId }
       });
 
-      // 2. Navigate to Details Page
       navigate(`/admin/order/${orderId}`);
     } catch (error) {
       console.error("Error marking as seen:", error);
-      // Fail safe: Navigate anyway even if API fails
       navigate(`/admin/order/${orderId}`);
     }
   };
@@ -67,7 +63,7 @@ function Orders() {
     }
   };
 
-  // 🔥 Filter Logic: Search + Status Tabs + Unseen Logic
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch = 
         order.userId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -141,7 +137,6 @@ function Orders() {
             {filteredOrders.map((order) => (
               <tr 
                 key={order._id} 
-                // 🔥 Logic: Background Blue for Unseen Orders
                 className={`transition-colors duration-200 ${!order.isSeen ? 'bg-blue-50/80 hover:bg-blue-100/80' : 'hover:bg-slate-50'}`}
               >
                 <td className="p-4 font-mono text-xs font-semibold">
@@ -166,9 +161,7 @@ function Orders() {
 
                 <td className="p-4 text-right">
                   <div className="flex justify-end gap-2 items-center">
-                    <button onClick={() => handleOrderStatusUpdate(order._id, 'paid')} disabled={order.status === 'paid'} className="p-1.5 border border-green-200 bg-green-50 rounded-lg hover:bg-green-100 text-green-600 disabled:opacity-30"><Check size={16} /></button>
-                    <button onClick={() => handleOrderStatusUpdate(order._id, 'failed')} disabled={order.status === 'failed'} className="p-1.5 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 text-red-600 disabled:opacity-30"><X size={16} /></button>
-                    
+                   
                     <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
                     <button
