@@ -51,18 +51,18 @@ const SummaryApi = {
     url: baseURL + "/api/file/upload-admin",
     method: "post"
   },
-  getMyDocuments:{
-    url : baseURL + "/api/file/getMyDocuments",
-    method:"get"
+  getMyDocuments: {
+    url: baseURL + "/api/file/getMyDocuments",
+    method: "get"
   }
   ,
-  getUserDecision:{
-    url:baseURL + "/api/file/get-user-decision",
-    method:"get"
+  getUserDecision: {
+    url: baseURL + "/api/file/get-user-decision",
+    method: "get"
   },
-  updateFileDecision:{
-    url:baseURL+ "/api/file/update-decision",
-    method:"post"
+  updateFileDecision: {
+    url: baseURL + "/api/file/update-decision",
+    method: "post"
 
   },
   //plans
@@ -120,13 +120,28 @@ const SummaryApi = {
 
   },
 
-  setDocuments :{
-    url:baseURL + "/api/document/save-doc-requirements",
+  setDocuments: {
+    url: baseURL + "/api/document/save-doc-requirements",
     method: "post"
   },
-  getDocuments : {
-    url : baseURL + "/api/document/get-doc-requirements",
+  getDocuments: {
+    url: baseURL + "/api/document/get-doc-requirements",
+    method: "get"
+  },
+
+  //inquary 
+
+  creatEinquiry: {
+    url: baseURL + "/api/inquiry/create",
+    method:"post"
+  },
+  getEinquiry: {
+    url: baseURL + "/api/inquiry/all",
     method : "get"
+  },
+  deleteInquiry: {
+    url: baseURL + "/api/inquiry",
+    method:"delete"
   }
 
 }

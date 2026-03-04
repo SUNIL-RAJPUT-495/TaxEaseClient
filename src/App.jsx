@@ -20,6 +20,9 @@ import TaxPlanning from "./pages/services/TaxPlanning";
 import NoticeHandling from "./pages/services/NoticeHandling";
 import MainLayout from "./component/layout/MainLayout";
 
+import { ContactPage } from "./pages/ContactPage";
+import { AboutPage } from "./pages/AboutPage";
+
 
 // --- Admin Pages ---
 import Users from "./pages/admin/Users";
@@ -31,6 +34,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminInbox from "./pages/admin/AdminInbox";
 import OrderDetails from "./pages/admin/OrderDetailsView";
 import EditServicePlan from "./pages/admin/services/EditServicePlan";
+import InquiriesPage from "./pages/admin/InquiriesPage";
 
 
 // protected Route 
@@ -101,6 +105,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<IndexPage />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/contact" element={<ContactPage/>}/>
+          <Route path="/about" element={<AboutPage/>}/>
 
           {/* Individual Services */}
 
@@ -120,14 +126,14 @@ function App() {
           <Route path="/dashboard/documents" element={<Dashboard />} />
           <Route path="/dashboard/settings" element={<Dashboard />} />
           <Route path="/dashboard/chat" element={<Dashboard />} />
-         
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/FileStatusPage" element={<FileStatusPage />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/forgot-password" element={<ForgotPassword/>}/>
-         <Route path="/chat" element={<ChatPage />} />
+         
 
         <Route element={<ProtectedRouteAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>
@@ -142,6 +148,7 @@ function App() {
             <Route path="chat-inbox" element={<AdminInbox />} />
             <Route path="/admin/services/edit/:id" element={<EditServicePlan />} />
             <Route path="SetDocRequirements" element={<SetDocRequirements/>}/>
+            <Route path="Inquiries" element={<InquiriesPage/>}/>
           </Route>
         </Route>
 

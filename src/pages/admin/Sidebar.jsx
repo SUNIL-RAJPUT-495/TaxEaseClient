@@ -7,7 +7,7 @@ import {
   LayoutGrid, 
   Settings, 
   FileText, 
-  LogOut ,Inbox
+  LogOut ,Inbox,MessageSquare
 } from "lucide-react";
 
 const Sidebar = ({ sidebarOpen}) => {
@@ -24,6 +24,7 @@ const Sidebar = ({ sidebarOpen}) => {
     { icon: ShoppingBag, label: "Orders", path: "/admin/orders" },
     { icon: LayoutGrid, label: "Services", path: "/admin/services" },
     { icon: Inbox, label: "Inbox", path: "/admin/inbox" },
+    { icon: MessageSquare, label: "Inquiries", path: "/admin/Inquiries" },
     { icon: Settings, label: "Settings", path: "/admin/settings" },
     
   ];
