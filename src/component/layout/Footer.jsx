@@ -32,8 +32,8 @@ const Footer = () => {
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-xl leading-tight">
-                My All Business<br/>
-                <span className="text-blue-400">Consultant</span>
+                GOOD
+                <span className="text-blue-400">ITR</span>
               </span>
             </Link>
             <p className="text-blue-100/80 text-sm leading-relaxed">

@@ -60,7 +60,7 @@ const Navbar = () => {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-xl text-slate-900">
-              Tax<span className="text-blue-600">Ease</span>
+              GOOD<span className="text-blue-600">ITR</span>
             </span>
           </Link>
 
