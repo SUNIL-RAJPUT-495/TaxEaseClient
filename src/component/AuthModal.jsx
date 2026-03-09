@@ -7,10 +7,19 @@ const AuthModal = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const handleLoginRedirect = () => {
-        localStorage.clear();
-        onClose();
-        navigate("/login");
+    const handleLoginRedirect = (e) => {
+        e.preventDefault(); 
+        try {
+            localStorage.clear();
+
+            navigate("/login");
+
+            if (typeof onClose === 'function') {
+                onClose();
+            }
+        } catch (error) {
+            console.error("Failed to redirect to login:", error);
+        }
     };
 
     return (
@@ -30,7 +39,7 @@ const AuthModal = ({ isOpen, onClose }) => {
                     className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 >
                     <LogOut size={18} />
-                    Login 
+                    Login
                 </button>
             </div>
         </div>

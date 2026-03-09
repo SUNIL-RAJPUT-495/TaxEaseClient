@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import { FileText, Mail, Phone, MapPin } from "lucide-react";
+import logo from "../../assets/6.png"
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -28,13 +29,15 @@ const Footer = () => {
           {/* Brand & About Company */}
           <div className="space-y-6 lg:col-span-1">
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
-                <FileText className="w-5 h-5 text-white" />
+              
+              <div className="w-15 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg p-1.5">
+                <img
+                  src={logo} 
+                  alt="My All Business Consultant" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <span className="font-bold text-xl leading-tight">
-                GOOD
-                <span className="text-blue-400">ITR</span>
-              </span>
+              
             </Link>
             <p className="text-blue-100/80 text-sm leading-relaxed">
               India’s fastest growing destination for “Online Legal Services”. We have the vision to build legal things simplified through automation and technology. Our mission is to offer affordable, quick, and automated professional services to clients.

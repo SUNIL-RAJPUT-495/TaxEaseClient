@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, FileText, ChevronDown, User, LogOut, LayoutDashboard } from "lucide-react";
+import logo from "../../assets/6.png"
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,7 +10,6 @@ const Navbar = () => {
   
   const location = useLocation();
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -44,7 +44,6 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path;
 
- 
   const buttonBase = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2";
   const buttonGhost = "hover:bg-slate-100 hover:text-slate-900 text-slate-700";
   const buttonPrimary = "bg-blue-600 text-white shadow hover:bg-blue-600/90";
@@ -56,12 +55,14 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm">
-              <FileText className="w-5 h-5 text-white" />
+            {/* ✅ YAHAN CHANGES KIYE HAIN: Container ko bada kiya aur image ko responsive banaya */}
+            <div className="w-32 sm:w-44 flex items-center justify-center">
+              <img 
+                src={logo} 
+                alt="Logo" 
+                className="p-10 w-full h-auto object-contain"
+              />
             </div>
-            <span className="font-bold text-xl text-slate-900">
-              GOOD<span className="text-blue-600">ITR</span>
-            </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
@@ -109,7 +110,6 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
-             
               <>
                 <Link to="/dashboard" className={`${buttonBase} ${buttonGhost} gap-2`}>
                   <LayoutDashboard className="w-4 h-4" />
@@ -195,10 +195,8 @@ const Navbar = () => {
                 );
               })}
 
-
               <div className="flex flex-col gap-3 pt-6 mt-4 border-t border-slate-100 px-2">
                 {isLoggedIn ? (
-                 
                   <>
                     <Link 
                       to="/dashboard" 
