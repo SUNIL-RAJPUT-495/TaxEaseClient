@@ -87,7 +87,12 @@ const SummaryApi = {
   editPlan: {
     url: baseURL + "/api/plans/editPlan",
     method: "put"
+  },
+  getPlanCategory:{
+    url:baseURL+"/api/plans/getPlanCategory",
+    method:"get"
   }
+
   ,
   getAllServices: {
     url: baseURL + "/api/plans/getAllServices",
@@ -143,8 +148,8 @@ const SummaryApi = {
   deleteInquiry: {
     url: baseURL + "/api/inquiry",
     method:"delete"
-  }
-
+  },
+  
 }
 
 export default SummaryApi;

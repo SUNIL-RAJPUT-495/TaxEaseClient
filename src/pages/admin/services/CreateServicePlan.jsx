@@ -1,23 +1,27 @@
 import React, { useState } from "react";
-import { 
-  ArrowLeft, Plus, X, Save, Check, FileText, Calculator, Receipt, AlertCircle 
-} from "lucide-react";
+import { ArrowLeft, Plus, X, Save, Check } from "lucide-react";
 import { Link } from "react-router-dom";
-import Axios from "../../../utils/axios"
+import Axios from "../../../utils/axios";
 import SummaryApi from "../../../common/SummerAPI";
-
 
 const CreateServicePlan = () => {
   const [serviceCategory, setServiceCategory] = useState("ITR Filing");
   const [planName, setPlanName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  
+  // Features State
   const [features, setFeatures] = useState([]);
   const [currentFeature, setCurrentFeature] = useState("");
+
+  // Documents State (NEW)
+  const [documents, setDocuments] = useState([]);
+  const [currentDocument, setCurrentDocument] = useState("");
+
   const [isPopular, setIsPopular] = useState(false);
   const [loading, setLoading] = useState(false);
 
-
+  // --- Feature Handlers ---
   const addFeature = (e) => {
     e.preventDefault();
     if (currentFeature.trim()) {
@@ -30,14 +34,34 @@ const CreateServicePlan = () => {
     setFeatures(features.filter((_, i) => i !== index));
   };
 
-  const handleKeyPress = (e) => {
+  const handleFeatureKeyPress = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addFeature(e);
     }
   };
 
-const handleSubmit = async (e) => {
+  // --- Document Handlers (NEW) ---
+  const addDocument = (e) => {
+    e.preventDefault();
+    if (currentDocument.trim()) {
+      setDocuments([...documents, currentDocument]);
+      setCurrentDocument("");
+    }
+  };
+
+  const removeDocument = (index) => {
+    setDocuments(documents.filter((_, i) => i !== index));
+  };
+
+  const handleDocumentKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addDocument(e);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
@@ -47,6 +71,7 @@ const handleSubmit = async (e) => {
       price,
       description,
       features,
+      documents, 
       isPopular
     };
 
@@ -62,11 +87,14 @@ const handleSubmit = async (e) => {
       if (res.data.success) { 
         alert("Plan created successfully!");
 
+        // Reset Form
         setPlanName("");
         setPrice("");
         setDescription("");
         setFeatures([]);
         setCurrentFeature("");
+        setDocuments([]);
+        setCurrentDocument("");
         setIsPopular(false);
         setServiceCategory("ITR Filing"); 
       }
@@ -94,11 +122,10 @@ const handleSubmit = async (e) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-
+        {/* FORM SECTION */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             
-
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-700">Service Category</label>
               <select 
@@ -112,7 +139,6 @@ const handleSubmit = async (e) => {
                 <option>Notice Handling</option>
               </select>
             </div>
-
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -139,7 +165,6 @@ const handleSubmit = async (e) => {
               </div>
             </div>
 
-
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-700">Short Description</label>
               <textarea 
@@ -152,8 +177,7 @@ const handleSubmit = async (e) => {
               />
             </div>
 
-
-
+            {/* FEATURES SECTION */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Plan Features</label>
               <div className="flex gap-2">
@@ -162,7 +186,7 @@ const handleSubmit = async (e) => {
                   placeholder="Type a feature and press Enter"
                   value={currentFeature}
                   onChange={(e) => setCurrentFeature(e.target.value)}
-                  onKeyDown={handleKeyPress}
+                  onKeyDown={handleFeatureKeyPress}
                   className="flex-1 h-10 px-3 rounded-md border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
                 <button 
@@ -174,14 +198,12 @@ const handleSubmit = async (e) => {
                 </button>
               </div>
 
-
-
               <div className="space-y-2 mt-2">
                 {features.length === 0 && (
                   <p className="text-xs text-slate-400 italic">No features added yet.</p>
                 )}
                 {features.map((feature, index) => (
-                  <div key={index} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+                  <div key={`feature-${index}`} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
                     <div className="flex items-center gap-2">
                       <Check className="w-3 h-3 text-green-500" />
                       <span className="text-sm text-slate-700">{feature}</span>
@@ -198,8 +220,50 @@ const handleSubmit = async (e) => {
               </div>
             </div>
 
+            {/* DOCUMENTS SECTION (FIXED) */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Required Documents</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Type a required document and press Enter"
+                  value={currentDocument}
+                  onChange={(e) => setCurrentDocument(e.target.value)}
+                  onKeyDown={handleDocumentKeyPress}
+                  className="flex-1 h-10 px-3 rounded-md border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+                <button 
+                  type="button" 
+                  onClick={addDocument}
+                  className="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-md flex items-center justify-center text-slate-600 transition-colors"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
 
+              <div className="space-y-2 mt-2">
+                {documents.length === 0 && (
+                  <p className="text-xs text-slate-400 italic">No documents added yet.</p>
+                )}
+                {documents.map((doc, index) => (
+                  <div key={`doc-${index}`} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-3 h-3 text-blue-500" />
+                      <span className="text-sm text-slate-700">{doc}</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={() => removeDocument(index)}
+                      className="text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
+            {/* POPULAR TOGGLE */}
             <div className="flex items-center gap-2 pt-2">
               <input 
                 type="checkbox" 
@@ -212,8 +276,6 @@ const handleSubmit = async (e) => {
                 Mark as "Most Popular"
               </label>
             </div>
-
-
 
             <div className="pt-4">
               <button 
@@ -228,27 +290,22 @@ const handleSubmit = async (e) => {
           </form>
         </div>
 
+        {/* PREVIEW SECTION */}
         <div>
           <div className="sticky top-24">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Live Preview</h3>
             
-
-
             <div className={`relative flex flex-col bg-white rounded-xl overflow-hidden transition-all duration-300 ${
               isPopular 
                 ? "border-2 border-blue-600 shadow-xl scale-[1.02] z-10" 
                 : "border border-slate-200 shadow-lg"
             }`}>
               
-
-
               {isPopular && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-b-lg shadow-sm tracking-wide uppercase">
                   Most Popular
                 </div>
               )}
-
-
 
               <div className="p-6 pb-2 pt-8 text-center sm:text-left">
                 <span className="inline-block px-2 py-1 bg-slate-100 text-xs font-medium text-slate-500 rounded mb-2">
@@ -268,8 +325,6 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-
-
               <div className="p-6 pt-0 flex-1 flex flex-col">
                 <ul className="space-y-3 mt-4 mb-8 flex-1">
                   {features.length > 0 ? (
@@ -281,8 +336,6 @@ const handleSubmit = async (e) => {
                     ))
                   ) : (
                     <>
-
-
                       <li className="flex items-start gap-3 opacity-30">
                         <Check className="w-5 h-5 text-slate-300" />
                         <span className="text-sm text-slate-400">Feature 1 goes here...</span>

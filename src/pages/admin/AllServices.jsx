@@ -35,15 +35,13 @@ const AllServices = () => {
     fetchAllPlans();
   }, []);
 
-  // 🔥 DELETE PLAN LOGIC
   const handleDeletePlan = async (planId, planName) => {
     if (window.confirm(`Are you sure you want to delete the "${planName}" plan? This action cannot be undone.`)) {
       try {
         const response = await Axios({
-          // 🛠️ SummaryApi se config uthayenge
           url: SummaryApi.deletePlan.url,
           method: SummaryApi.deletePlan.method,
-          data: { id: planId } // Backend controller 'id' expect kar raha hai
+          data: { id: planId } 
         });
 
         if (response.data.success) {
@@ -75,13 +73,7 @@ const AllServices = () => {
           <p className="text-sm text-slate-500">Manage pricing and track subscriptions.</p>
         </div>
         <div >
-          <button 
-          className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white mx-3 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95" 
-          onClick={() => navigate("/admin/SetDocRequirements")}
-        >
-          <Plus className="w-4 h-4" />
-          Add Required Documents
-        </button>
+          
         <button 
           className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95" 
           onClick={() => navigate("/admin/services/create")}

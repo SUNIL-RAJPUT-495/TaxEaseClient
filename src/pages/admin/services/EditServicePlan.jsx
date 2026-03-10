@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { 
-  ArrowLeft, Plus, X, Save, Check, FileText, Calculator, Receipt, AlertCircle, Loader2 
-} from "lucide-react";
+import { ArrowLeft, Plus, X, Save, Check, Loader2 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import Axios from "../../../utils/axios";
 import SummaryApi from "../../../common/SummerAPI";
@@ -11,19 +9,25 @@ const EditServicePlan = () => {
   const { id } = useParams(); 
   const navigate = useNavigate();
 
-  // Saari states Create page wali hain
   const [serviceCategory, setServiceCategory] = useState("ITR Filing");
   const [planName, setPlanName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  
+  // Features State
   const [features, setFeatures] = useState([]);
   const [currentFeature, setCurrentFeature] = useState("");
+
+  // Documents State (NEW)
+  const [documents, setDocuments] = useState([]);
+  const [currentDocument, setCurrentDocument] = useState("");
+
   const [isPopular, setIsPopular] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true); 
 
-  // --- 🔥 Initial Data Fetch (Auto-fill) ---
+  // --- Initial Data Fetch (Auto-fill) ---
   useEffect(() => {
     const fetchPlanDetails = async () => {
       try {
@@ -41,6 +45,7 @@ const EditServicePlan = () => {
             setPrice(plan.price);
             setDescription(plan.description);
             setFeatures(plan.features || []);
+            setDocuments(plan.documents || []); // Auto-fill documents
             setIsPopular(plan.isPopular);
           }
         }
@@ -54,6 +59,7 @@ const EditServicePlan = () => {
     if (id) fetchPlanDetails();
   }, [id]);
 
+  // --- Feature Handlers ---
   const addFeature = (e) => {
     e.preventDefault();
     if (currentFeature.trim()) {
@@ -66,10 +72,30 @@ const EditServicePlan = () => {
     setFeatures(features.filter((_, i) => i !== index));
   };
 
-  const handleKeyPress = (e) => {
+  const handleFeatureKeyPress = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addFeature(e);
+    }
+  };
+
+  // --- Document Handlers (NEW) ---
+  const addDocument = (e) => {
+    e.preventDefault();
+    if (currentDocument.trim()) {
+      setDocuments([...documents, currentDocument]);
+      setCurrentDocument("");
+    }
+  };
+
+  const removeDocument = (index) => {
+    setDocuments(documents.filter((_, i) => i !== index));
+  };
+
+  const handleDocumentKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addDocument(e);
     }
   };
 
@@ -84,6 +110,7 @@ const EditServicePlan = () => {
       price: Number(price),
       description,
       features,
+      documents, // Included documents in the final payload
       isPopular
     };
 
@@ -114,7 +141,6 @@ const EditServicePlan = () => {
   return (
     <div className="space-y-6">
       
-      {/* Header - Same as Create */}
       <div className="flex items-center gap-4">
         <Link to="/admin/services" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
           <ArrowLeft className="w-5 h-5" />
@@ -127,7 +153,7 @@ const EditServicePlan = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Form Section - Same as Create */}
+        {/* Form Section */}
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             
@@ -179,6 +205,7 @@ const EditServicePlan = () => {
               />
             </div>
 
+            {/* FEATURES SECTION */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Plan Features</label>
               <div className="flex gap-2">
@@ -186,7 +213,7 @@ const EditServicePlan = () => {
                   type="text" 
                   value={currentFeature}
                   onChange={(e) => setCurrentFeature(e.target.value)}
-                  onKeyDown={handleKeyPress}
+                  onKeyDown={handleFeatureKeyPress}
                   className="flex-1 h-10 px-3 rounded-md border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="Type feature and press Enter"
                 />
@@ -197,7 +224,7 @@ const EditServicePlan = () => {
 
               <div className="space-y-2 mt-2">
                 {features.map((feature, index) => (
-                  <div key={index} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+                  <div key={`feature-${index}`} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
                     <div className="flex items-center gap-2">
                       <Check className="w-3 h-3 text-green-500" />
                       <span className="text-sm text-slate-700">{feature}</span>
@@ -210,6 +237,39 @@ const EditServicePlan = () => {
               </div>
             </div>
 
+            {/* DOCUMENTS SECTION (FIXED DUPLICATE) */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Required Documents</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={currentDocument}
+                  onChange={(e) => setCurrentDocument(e.target.value)}
+                  onKeyDown={handleDocumentKeyPress}
+                  className="flex-1 h-10 px-3 rounded-md border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Type document and press Enter"
+                />
+                <button type="button" onClick={addDocument} className="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-md flex items-center justify-center transition-colors">
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2 mt-2">
+                {documents.map((doc, index) => (
+                  <div key={`doc-${index}`} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-md border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-3 h-3 text-blue-500" />
+                      <span className="text-sm text-slate-700">{doc}</span>
+                    </div>
+                    <button type="button" onClick={() => removeDocument(index)} className="text-slate-400 hover:text-red-500 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* POPULAR TOGGLE */}
             <div className="flex items-center gap-2 pt-2">
               <input 
                 type="checkbox" 
@@ -235,7 +295,7 @@ const EditServicePlan = () => {
           </form>
         </div>
 
-        {/* Live Preview Section - Same as Create */}
+        {/* Live Preview Section */}
         <div>
           <div className="sticky top-24">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Live Preview</h3>
@@ -272,12 +332,19 @@ const EditServicePlan = () => {
 
               <div className="p-6 pt-0 flex-1 flex flex-col">
                 <ul className="space-y-3 mt-4 mb-8 flex-1">
-                  {features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-600 leading-snug">{feature}</span>
+                  {features.length > 0 ? (
+                     features.map((feature, index) => (
+                      <li key={`preview-feat-${index}`} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-slate-600 leading-snug">{feature}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="flex items-start gap-3 opacity-30">
+                        <Check className="w-5 h-5 text-slate-300" />
+                        <span className="text-sm text-slate-400">Features will appear here...</span>
                     </li>
-                  ))}
+                  )}
                 </ul>
 
                 <button className={`w-full inline-flex items-center justify-center rounded-lg text-sm font-bold h-11 transition-all ${

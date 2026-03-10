@@ -7,55 +7,55 @@ import toast from "react-hot-toast";
 const SetDocRequirements = () => {
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState("");
-  
   const [allPlans, setAllPlans] = useState([]);   
   const [displayPlans, setDisplayPlans] = useState([]); 
-  
   const [selectedPlan, setSelectedPlan] = useState("");
   const [docList, setDocList] = useState([{ docName: "", isMandatory: true }]);
   const [loading, setLoading] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true); 
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Fetch Services
+        setFetchingData(true);
         const resServices = await Axios({
-          url: SummaryApi.getAllServices.url,
-          method: SummaryApi.getAllServices.method
+          url: SummaryApi.getPlanCategory.url,
+          method: SummaryApi.getPlanCategory.method
         });
+        
         if (resServices.data.success) {
+            console.log("Fetched Categories:", resServices.data.data); 
             setServices(resServices.data.data || []);
         }
 
-        // 2. Fetch Plans
         const resPlans = await Axios({
           url: SummaryApi.getplan.url,
           method: SummaryApi.getplan.method
         });
+        
         if (resPlans.data.success) {
             setAllPlans(resPlans.data.data || []);
         }
       } catch (error) {
+        console.error("Fetch Error:", error);
         toast.error("Failed to load dropdown options");
+      } finally {
+        setFetchingData(false);
       }
     };
     
     fetchData();
   }, []);
-  console.log()
 
-  const handleServiceChange = (id) => {
-    setSelectedService(id);
+  const handleServiceChange = (categoryName) => {
+    setSelectedService(categoryName);
     setSelectedPlan(""); 
     
-    const service = services.find(s => s._id === id);
-    
-    if (service && service.plans && service.plans.length > 0) {
-        setDisplayPlans(service.plans);
+    if (categoryName) {
+        const matchingPlans = allPlans.filter(p => p.serviceCategory === categoryName);
+        setDisplayPlans(matchingPlans);
     } else {
-        const matchingPlans = allPlans.filter(p => p.serviceId === id || p.service === id);
-        
-        setDisplayPlans(matchingPlans.length > 0 ? matchingPlans : allPlans);
+        setDisplayPlans([]);
     }
   };
 
@@ -94,7 +94,7 @@ const SetDocRequirements = () => {
         url: SummaryApi.setDocuments.url,
         method: SummaryApi.setDocuments.method,
         data: {
-            serviceId: selectedService,
+            serviceId: selectedService, 
             planId: selectedPlan,
             documents: validDocs
         }
@@ -108,6 +108,7 @@ const SetDocRequirements = () => {
       setLoading(false);
     }
   };
+  console.log(services)
 
   return (
     <div className="p-6 bg-white rounded-3xl shadow-sm border border-slate-200">
@@ -117,27 +118,44 @@ const SetDocRequirements = () => {
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-2">Select Service</label>
+          <label className="block text-sm font-bold text-slate-700 mb-2">Select Category</label>
           <select 
             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" 
             value={selectedService}
             onChange={(e) => handleServiceChange(e.target.value)}
+            disabled={fetchingData}
           >
-            <option value="">Choose Service</option>
-            {services.map(s => <option key={s._id} value={s._id}>{s.name || s.categoryName}</option>)}
+            <option value="">Choose Category</option>
+            {fetchingData ? (
+              <option disabled>Loading categories...</option>
+            ) : (
+              services.map((categoryString, index) => (
+                <option key={index} value={categoryString}>
+                  {categoryString}
+                </option>
+              ))
+            )}
           </select>
         </div>
+        
         <div>
           <label className="block text-sm font-bold text-slate-700 mb-2">Select Plan</label>
           <select 
             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" 
             value={selectedPlan}
             onChange={(e) => setSelectedPlan(e.target.value)}
-            disabled={!selectedService}
+            disabled={!selectedService || fetchingData}
           >
             <option value="">Choose Plan</option>
-            {/* 🔥 Yahan displayPlans use hoga */}
-            {displayPlans.map(p => <option key={p._id} value={p._id}>{p.planName}</option>)}
+            {displayPlans.length > 0 ? (
+                displayPlans.map(p => (
+                  <option key={p._id} value={p._id}>
+                    {p.planName}
+                  </option>
+                ))
+            ) : (
+                selectedService && <option disabled>No plans found</option>
+            )}
           </select>
         </div>
       </div>

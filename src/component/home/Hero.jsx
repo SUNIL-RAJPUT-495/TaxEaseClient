@@ -155,7 +155,6 @@ const Hero = () => {
                   <span className="font-medium text-sm">Average 2-3 Days</span>
                 </div>
 
-                {/* Decorative Blur behind card (accent/20) */}
                 <div className="absolute -top-4 -left-4 w-20 h-20 bg-indigo-600/20 rounded-2xl blur-xl -z-10" />
               </div>
             </div>

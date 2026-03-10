@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-// 🔥 useSearchParams add kiya yahan
 import { useNavigate, useSearchParams } from "react-router-dom"; 
 import { 
   CloudUpload, FileText, X, ShieldCheck, CheckCircle2, 
@@ -17,7 +16,11 @@ const UploadDocsPage = () => {
   
   const fileInputRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  
+  // 🔥 STATES
   const [uploadedDocs, setUploadedDocs] = useState([]);
+  const [requiredDocs, setRequiredDocs] = useState([]); // Dynamic checklist state
+  
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -36,8 +39,11 @@ const UploadDocsPage = () => {
                 url: `${SummaryApi.getMyDocuments?.url}?activeServiceId=${activeServiceId}`,
                 method: SummaryApi.getMyDocuments?.method
             });
+            
             if (res.data.success) {
-                setUploadedDocs(res.data.data || []);
+                // 🔥 Naye backend response ke hisaab se data set karein
+                setUploadedDocs(res.data.data.uploadedDocuments || []);
+                setRequiredDocs(res.data.data.requiredDocuments || []);
             }
         } catch (error) { 
           console.log(error);
@@ -86,8 +92,8 @@ const UploadDocsPage = () => {
       if (res.data.success) {
         toast.success("Documents uploaded successfully!");
         
+        // Refresh docs after upload
         const service = res.data.data.activeServices.find(s => s._id === activeServiceId);
-        
         if(service && service.documents) {
              const userUploadedOnly = service.documents.filter(d => d.uploadedBy === 'USER');
              setUploadedDocs(userUploadedOnly.sort((a,b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)));
@@ -101,8 +107,6 @@ const UploadDocsPage = () => {
     } 
     finally { setUploading(false); }
   };
-
-  const formatSize = (bytes) => (bytes / (1024 * 1024)).toFixed(2) + " MB";
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -133,13 +137,26 @@ const UploadDocsPage = () => {
               <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
                 <FileText className="text-blue-600" size={20} /> Required Checklist
               </h3>
+              
+              {/* 🔥 NAYA DYNAMIC UI: Backend se aayi Required Docs List dikhayega */}
               <ul className="space-y-4">
-                {["PAN Card", "Aadhar Card", "Form-16", "Bank Statement"].map((doc, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <CheckCircle2 size={16} className="text-green-500" /> {doc}
+                {fetching ? (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="animate-spin text-slate-400" size={20} />
+                  </div>
+                ) : requiredDocs.length > 0 ? (
+                  requiredDocs.map((doc, i) => (
+                    <li key={i} className="flex items-center gap-3 text-sm font-medium text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <CheckCircle2 size={16} className="text-green-500" /> {doc}
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-sm text-slate-400 italic bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                    No specific documents required for this plan.
                   </li>
-                ))}
+                )}
               </ul>
+
             </div>
           </div>
 
@@ -180,7 +197,7 @@ const UploadDocsPage = () => {
               )}
             </div>
 
-            {/* 🔥 Updated Vault List */}
+            {/* Vault List */}
             <div className="bg-white border border-slate-200 shadow-sm rounded-3xl overflow-hidden">
                 <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                    <h3 className="font-black text-slate-900 uppercase tracking-tight">Your Document Vault</h3>
@@ -224,7 +241,6 @@ const UploadDocsPage = () => {
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Current Status</p>
             <p className="text-sm font-black text-slate-700">Documents Uploaded: {uploadedDocs.length}</p>
           </div>
-          {/* 🔥 Agle page par jane par bhi ID aage bhej do */}
           <button onClick={() => navigate(`/FileStatusPage?serviceId=${activeServiceId}`)} className="w-full md:w-auto bg-blue-700 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-900 shadow-xl transition-all flex items-center justify-center gap-3">
             GO TO STATUS <ArrowRight size={20} />
           </button>
