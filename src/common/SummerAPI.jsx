@@ -10,7 +10,7 @@ const SummaryApi = {
     method: "POST"
   },
   // Verify User 
-  verifyUser: {
+  verifyUser: { 
     url: baseURL + "/api/user/verify-user",
     method: "POST"
   },
@@ -149,6 +149,11 @@ const SummaryApi = {
     url: baseURL + "/api/inquiry",
     method:"delete"
   },
+
+  orderWebhook:{
+    url:baseURL + "/api/order/webhook/imb",
+    method:"post"
+  }
   
 }
 

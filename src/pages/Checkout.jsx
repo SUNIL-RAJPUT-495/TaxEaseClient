@@ -6,7 +6,7 @@ import SummaryApi from "../common/SummerAPI";
 import OrderStepper from "../component/OrderStepper"; 
 import { toast } from 'react-hot-toast';
 
-// Helper function (Razorpay removed as it's not needed for IMB)
+
 
 const CheckoutHeader = () => (
   <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4 md:px-10 shadow-sm">
@@ -91,7 +91,7 @@ const CheckoutPage = () => {
             service: planDetails?.category || "Service", 
             plan: planDetails?.planName || "Basic", 
             amount: totalAmount,
-            planId: planId 
+            planId: planId ,
         }
       });
 
@@ -125,6 +125,8 @@ const CheckoutPage = () => {
   const price = planDetails.price;
   const tax = Math.round(price * 0.18);
   const total = price + tax;
+
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

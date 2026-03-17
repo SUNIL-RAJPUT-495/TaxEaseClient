@@ -47,6 +47,7 @@ import AuthModal from "./component/AuthModal";
 import SetDocRequirements from "./pages/admin/SetDocRequirements";
 
 import { Toaster } from 'react-hot-toast';
+import PaymentStatus from "./pages/PaymentStatus";
 
 function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -128,6 +129,7 @@ function App() {
           <Route path="/dashboard/chat" element={<Dashboard />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/FileStatusPage" element={<FileStatusPage />} />
+          <Route path="/payment-status/:transactionId" element={<PaymentStatus />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
