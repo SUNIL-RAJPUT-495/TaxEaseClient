@@ -163,13 +163,6 @@ const Login = () => {
                 </Link>
               </p>
             </div>
-
-            {/* Demo Note */}
-            <div className="mt-6 p-3 bg-slate-100 rounded-lg text-center border border-slate-200">
-              <p className="text-xs text-slate-500 font-medium">
-                Demo: Use any email with "admin" to access admin dashboard
-              </p>
-            </div>
           </div>
         </div>
       </div>
